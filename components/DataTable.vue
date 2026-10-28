@@ -1,4 +1,5 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ChevronsUpDown } from 'lucide-vue-next'
 interface Column { key: string; label: string; numeric?: boolean; emptyLabel?: string }
 
 const props = defineProps<{
@@ -46,7 +47,7 @@ const ariaSort = (key: string) => sortKey.value !== key ? 'none' : sortDir.value
               <th class="idx">#</th>
               <th v-for="c in columns" :key="c.key" :class="{ numeric: c.numeric }" :aria-sort="ariaSort(c.key)">
                 <button class="sort" @click="sortBy(c.key)">
-                  {{ c.label }}<span class="arrow">{{ sortKey === c.key ? (sortDir === 1 ? '▲' : '▼') : '' }}</span>
+                  {{ c.label }}<ChevronUp v-if="sortKey === c.key && sortDir === 1" :size="14" class="arrow on" /><ChevronDown v-else-if="sortKey === c.key" :size="14" class="arrow on" /><ChevronsUpDown v-else :size="13" class="arrow" />
                 </button>
               </th>
             </tr>
@@ -75,8 +76,8 @@ const ariaSort = (key: string) => sortKey.value !== key ? 'none' : sortDir.value
       <div class="pager">
         <span class="muted">{{ firstIdx + 1 }}–{{ Math.min(firstIdx + size, rows.length) }} з {{ rows.length }}</span>
         <div class="btns">
-          <button class="btn sm" :disabled="page <= 1" aria-label="Попередня сторінка" @click="page--">‹</button>
-          <button class="btn sm" :disabled="page >= pages" aria-label="Наступна сторінка" @click="page++">›</button>
+          <button class="btn sm" :disabled="page <= 1" aria-label="Попередня сторінка" @click="page--"><ChevronLeft :size="16" /></button>
+          <button class="btn sm" :disabled="page >= pages" aria-label="Наступна сторінка" @click="page++"><ChevronRight :size="16" /></button>
         </div>
       </div>
     </template>
@@ -94,7 +95,9 @@ th { font-weight: 600; font-size: 12.5px; color: var(--ink-2); white-space: nowr
 tfoot td { font-weight: 650; border-bottom: none; }
 .sort { all: unset; cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
 .sort:focus-visible { outline: 2px solid var(--accent); }
-.arrow { font-size: 9px; width: 8px; }
+.arrow { color: var(--ink-3); opacity: .6; flex: none; }
+.arrow.on { color: var(--accent); opacity: 1; }
+.sort:hover .arrow { opacity: 1; }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 10px; font-size: 13px; }
 .btns { display: flex; gap: 6px; }
 </style>

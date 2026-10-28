@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BarChart3, Check, Globe, KeyRound, LoaderCircle, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, User as UserIcon, UserPlus, Users, X } from 'lucide-vue-next'
 interface Landing { id: number; name: string; hostname: string }
 interface User { id: number; login: string; role: 'admin' | 'user'; created_at: string; landing_ids: number[] }
 
@@ -93,8 +94,8 @@ async function deleteLanding(l: Landing) {
 <template>
   <div class="container page">
     <div class="tabs" role="tablist">
-      <button role="tab" :aria-selected="tab === 'users'" :class="{ on: tab === 'users' }" @click="tab = 'users'">Користувачі ({{ users?.length ?? 0 }})</button>
-      <button role="tab" :aria-selected="tab === 'landings'" :class="{ on: tab === 'landings' }" @click="tab = 'landings'">Лендинги ({{ landings?.length ?? 0 }})</button>
+      <button role="tab" :aria-selected="tab === 'users'" :class="{ on: tab === 'users' }" @click="tab = 'users'"><Users :size="16" :stroke-width="1.75" />Користувачі ({{ users?.length ?? 0 }})</button>
+      <button role="tab" :aria-selected="tab === 'landings'" :class="{ on: tab === 'landings' }" @click="tab = 'landings'"><Globe :size="16" :stroke-width="1.75" />Лендинги ({{ landings?.length ?? 0 }})</button>
     </div>
 
     <p v-if="msg" class="flash ok">{{ msg }}</p>
@@ -107,7 +108,7 @@ async function deleteLanding(l: Landing) {
         <div class="form">
           <label class="field">Логін <input v-model="nu.login" class="input" autocomplete="off"></label>
           <label class="field">Пароль
-            <span class="row"><input v-model="nu.password" class="input grow" autocomplete="new-password"><button class="btn sm" type="button" @click="genPassword">Згенерувати</button></span>
+            <span class="row"><input v-model="nu.password" class="input grow" autocomplete="new-password"><button class="btn sm" type="button" @click="genPassword"><KeyRound :size="15" :stroke-width="1.9" />Згенерувати</button></span>
           </label>
           <label class="field">Роль
             <select v-model="nu.role" class="input"><option value="user">Користувач</option><option value="admin">Адміністратор</option></select>
@@ -118,14 +119,16 @@ async function deleteLanding(l: Landing) {
           <label v-for="l in landings" :key="l.id" class="check"><input v-model="nu.landingIds" type="checkbox" :value="l.id"> {{ l.name }} <span class="muted">{{ l.hostname }}</span></label>
           <span v-if="!landings?.length" class="muted">Спершу додайте лендинги на вкладці «Лендинги».</span>
         </fieldset>
-        <button class="btn primary" :disabled="!nu.login || nu.password.length < 8" @click="createUser">Створити</button>
+        <button class="btn primary" :disabled="!nu.login || nu.password.length < 8" @click="createUser"><UserPlus :size="15" :stroke-width="1.9" />Створити</button>
         <p class="muted tiny">Пароль щонайменше 8 символів. Передайте його користувачу окремо — тут він більше не показується.</p>
       </section>
 
       <section class="card list">
         <div v-for="u in users" :key="u.id" class="item">
           <div class="item-head">
-            <div>
+            <div class="who-l">
+              <span class="avatar" :class="u.role"><ShieldCheck v-if="u.role === 'admin'" :size="16" :stroke-width="1.9" /><UserIcon v-else :size="16" :stroke-width="1.9" /></span>
+              <div>
               <b>{{ u.login }}</b>
               <span class="role" :class="u.role">{{ u.role === 'admin' ? 'адмін' : 'користувач' }}</span>
               <span v-if="u.id === me?.id" class="muted tiny">(це ви)</span>
@@ -134,10 +137,11 @@ async function deleteLanding(l: Landing) {
                 <template v-else-if="u.landing_ids.length">{{ u.landing_ids.map(landingName).join(', ') }}</template>
                 <template v-else>Немає доступу до лендингів</template>
               </div>
+              </div>
             </div>
             <div class="actions">
-              <button v-if="editing !== u.id" class="btn sm" @click="startEdit(u)">Змінити</button>
-              <button v-if="u.id !== me?.id" class="btn sm danger" @click="deleteUser(u)">Видалити</button>
+              <button v-if="editing !== u.id" class="btn sm" @click="startEdit(u)"><Pencil :size="15" :stroke-width="1.9" />Змінити</button>
+              <button v-if="u.id !== me?.id" class="btn sm danger" @click="deleteUser(u)"><Trash2 :size="15" :stroke-width="1.9" />Видалити</button>
             </div>
           </div>
           <div v-if="editing === u.id" class="edit">
@@ -152,8 +156,8 @@ async function deleteLanding(l: Landing) {
               <label v-for="l in landings" :key="l.id" class="check"><input v-model="edit.landingIds" type="checkbox" :value="l.id"> {{ l.name }} <span class="muted">{{ l.hostname }}</span></label>
             </fieldset>
             <div class="row">
-              <button class="btn primary sm" :disabled="!!edit.password && edit.password.length < 8" @click="saveEdit(u)">Зберегти</button>
-              <button class="btn sm" @click="editing = null">Скасувати</button>
+              <button class="btn primary sm" :disabled="!!edit.password && edit.password.length < 8" @click="saveEdit(u)"><Check :size="15" :stroke-width="1.9" />Зберегти</button>
+              <button class="btn sm" @click="editing = null"><X :size="15" :stroke-width="1.9" />Скасувати</button>
             </div>
           </div>
         </div>
@@ -171,12 +175,12 @@ async function deleteLanding(l: Landing) {
         </div>
         <datalist id="ga-hosts"><option v-for="h in unusedHosts" :key="h.hostname" :value="h.hostname" /></datalist>
         <div class="row">
-          <button class="btn primary" :disabled="!nl.hostname" @click="createLanding">Додати</button>
-          <button class="btn" :disabled="hostsPending" @click="loadHosts()">{{ hostsPending ? 'Завантаження…' : 'Підтягнути домени з GA4' }}</button>
+          <button class="btn primary" :disabled="!nl.hostname" @click="createLanding"><Plus :size="15" :stroke-width="1.9" />Додати</button>
+          <button class="btn" :disabled="hostsPending" @click="loadHosts()"><LoaderCircle v-if="hostsPending" :size="15" :stroke-width="1.9" class="spin" /><RefreshCw v-else :size="15" :stroke-width="1.9" />{{ hostsPending ? 'Завантаження…' : 'Підтягнути домени з GA4' }}</button>
         </div>
         <div v-if="unusedHosts.length" class="hosts">
           <span class="muted tiny">Є в GA4 за 90 днів, ще не додані:</span>
-          <button v-for="h in unusedHosts" :key="h.hostname" class="btn sm" @click="nl.hostname = h.hostname">{{ h.hostname }} <span class="muted">{{ fmtInt(h.sessions) }}</span></button>
+          <button v-for="h in unusedHosts" :key="h.hostname" class="btn sm" @click="nl.hostname = h.hostname"><Globe :size="14" :stroke-width="1.9" />{{ h.hostname }} <span class="muted">{{ fmtInt(h.sessions) }}</span></button>
         </div>
       </section>
 
@@ -184,11 +188,11 @@ async function deleteLanding(l: Landing) {
         <p v-if="!landings?.length" class="muted">Лендингів ще немає.</p>
         <div v-for="l in landings" :key="l.id" class="item">
           <div v-if="editingL !== l.id" class="item-head">
-            <div><b>{{ l.name }}</b><div class="muted tiny">{{ l.hostname }}</div></div>
+            <div class="who-l"><span class="avatar site"><Globe :size="16" :stroke-width="1.9" /></span><div><b>{{ l.name }}</b><div class="muted tiny">{{ l.hostname }}</div></div></div>
             <div class="actions">
-              <NuxtLink class="btn sm" :to="{ path: '/', query: { landing: l.id } }">Дашборд</NuxtLink>
-              <button class="btn sm" @click="startEditL(l)">Змінити</button>
-              <button class="btn sm danger" @click="deleteLanding(l)">Видалити</button>
+              <NuxtLink class="btn sm" :to="{ path: '/', query: { landing: l.id } }"><BarChart3 :size="15" :stroke-width="1.9" />Дашборд</NuxtLink>
+              <button class="btn sm" @click="startEditL(l)"><Pencil :size="15" :stroke-width="1.9" />Змінити</button>
+              <button class="btn sm danger" @click="deleteLanding(l)"><Trash2 :size="15" :stroke-width="1.9" />Видалити</button>
             </div>
           </div>
           <div v-else class="edit">
@@ -197,8 +201,8 @@ async function deleteLanding(l: Landing) {
               <label class="field">Домен <input v-model="el.hostname" class="input"></label>
             </div>
             <div class="row">
-              <button class="btn primary sm" @click="saveL(l)">Зберегти</button>
-              <button class="btn sm" @click="editingL = null">Скасувати</button>
+              <button class="btn primary sm" @click="saveL(l)"><Check :size="15" :stroke-width="1.9" />Зберегти</button>
+              <button class="btn sm" @click="editingL = null"><X :size="15" :stroke-width="1.9" />Скасувати</button>
             </div>
           </div>
         </div>
@@ -210,7 +214,7 @@ async function deleteLanding(l: Landing) {
 <style scoped>
 .page { padding-top: 16px; padding-bottom: 48px; display: grid; gap: 16px; }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--hair); overflow-x: auto; }
-.tabs button { all: unset; cursor: pointer; padding: 10px 14px; color: var(--ink-2); border-bottom: 2px solid transparent; white-space: nowrap; font-size: 14px; }
+.tabs button { all: unset; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; padding: 10px 14px; color: var(--ink-2); border-bottom: 2px solid transparent; white-space: nowrap; font-size: 14px; }
 .tabs button.on { color: var(--ink); border-color: var(--accent); }
 .card { display: grid; gap: 12px; }
 .card > .btn { justify-self: start; }
@@ -227,6 +231,11 @@ async function deleteLanding(l: Landing) {
 .item:last-child { border-bottom: none; }
 .item-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.avatar { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: var(--grid); color: var(--ink-2); vertical-align: middle; margin-right: 10px; flex: none; }
+.avatar.admin { background: var(--accent-wash); color: var(--accent); }
+.who-l { display: flex; align-items: center; }
+@media (prefers-reduced-motion: no-preference) { .spin { animation: spin .8s linear infinite; } }
+@keyframes spin { to { transform: rotate(360deg); } }
 .role { font-size: 11.5px; padding: 1px 8px; border-radius: 99px; margin-left: 6px; background: var(--grid); color: var(--ink-2); }
 .role.admin { background: var(--accent-wash); color: var(--accent); }
 .edit { display: grid; gap: 12px; padding: 12px; border-radius: 8px; background: var(--page); }

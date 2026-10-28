@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { CornerUpLeft, Hourglass, Inbox, Link2, MousePointerClick, Target, Timer } from 'lucide-vue-next'
 import type { Stats } from '~~/shared/stats'
 
 interface Landing { id: number; name: string; hostname: string }
@@ -97,6 +98,7 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
     <div v-if="landingsError" class="card error">Не вдалося завантажити список лендингів.</div>
 
     <div v-else-if="!landings?.length" class="card empty-state">
+      <span class="empty-ico" aria-hidden="true"><Inbox :size="22" :stroke-width="1.75" /></span>
       <h2>Немає доступних лендингів</h2>
       <p class="muted">Попросіть адміністратора видати вам доступ до потрібних лендингів.</p>
     </div>
@@ -141,22 +143,22 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
 
       <div v-else class="body" :class="{ refreshing: loading }">
         <section class="card strip" aria-label="Ключові показники">
-          <KpiCard title="Sessions" :value="s.kpis.sessions.value" :prev="s.kpis.sessions.prev" format="int"
+          <KpiCard :icon="MousePointerClick" title="Sessions" :value="s.kpis.sessions.value" :prev="s.kpis.sessions.prev" format="int"
                    :spark="s.daily.map((d) => d.sessions)" :spark-labels="dayLabels" color-var="--sessions" />
-          <KpiCard title="Leads" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
+          <KpiCard :icon="Target" title="Leads" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
                    :spark="s.daily.map((d) => d.leads)" :spark-labels="dayLabels" color-var="--leads" />
-          <KpiCard title="Avg. Session Duration" :value="s.kpis.avgSessionDuration.value" :prev="s.kpis.avgSessionDuration.prev" format="duration"
+          <KpiCard :icon="Timer" title="Avg. Session Duration" :value="s.kpis.avgSessionDuration.value" :prev="s.kpis.avgSessionDuration.prev" format="duration"
                    :spark="s.daily.map((d) => d.avgSessionDuration)" :spark-labels="dayLabels" color-var="--sessions" />
-          <KpiCard title="Avg. Session Duration for Leads" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
+          <KpiCard :icon="Hourglass" title="Avg. Session Duration for Leads" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
                    :prev="s.kpis.leads.prev ? s.kpis.avgSessionDurationLeads.prev : null" format="duration"
                    :spark="s.daily.map((d) => d.avgSessionDurationLeads)" :spark-labels="dayLabels" color-var="--leads" hint="Немає лідів за період" />
-          <KpiCard title="Bounce rate" :value="s.kpis.sessions.value ? s.kpis.bounceRate.value : null" :prev="s.kpis.sessions.prev ? s.kpis.bounceRate.prev : null"
+          <KpiCard :icon="CornerUpLeft" title="Bounce rate" :value="s.kpis.sessions.value ? s.kpis.bounceRate.value : null" :prev="s.kpis.sessions.prev ? s.kpis.bounceRate.prev : null"
                    format="pct" good-when="down" :spark="s.daily.map((d) => d.bounceRate)" :spark-labels="dayLabels" color-var="--sessions" />
         </section>
 
         <section id="leads" class="section">
           <div class="section-head">
-            <h2><span class="key leads" aria-hidden="true" />Ліди</h2>
+            <h2><span class="key leads" aria-hidden="true"><Target :size="16" :stroke-width="2" /></span>Ліди</h2>
             <p class="muted">Подія <code>{{ s.leadEvent }}</code> у GA4</p>
           </div>
           <div class="grid-3">
@@ -192,7 +194,7 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
 
         <section id="sessions" class="section">
           <div class="section-head">
-            <h2><span class="key sessions" aria-hidden="true" />Сесії</h2>
+            <h2><span class="key sessions" aria-hidden="true"><MousePointerClick :size="16" :stroke-width="2" /></span>Сесії</h2>
           </div>
           <div class="grid-2">
             <div class="card">
@@ -220,7 +222,7 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
 
         <section id="sources" class="section">
           <div class="section-head">
-            <h2>Джерела трафіку</h2>
+            <h2><span class="key neutral" aria-hidden="true"><Link2 :size="16" :stroke-width="2" /></span>Джерела трафіку</h2>
           </div>
           <div class="card">
             <h3>Referrers Stats</h3>
@@ -277,9 +279,11 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
 .section-head h2 { display: flex; align-items: center; gap: 10px; }
 .section-head p { margin: 0; font-size: 13.5px; }
 .section-head code { font-family: inherit; font-weight: 600; color: var(--ink-2); }
-.key { width: 12px; height: 12px; border-radius: 3px; }
+.key { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; color: #fff; }
 .key.leads { background: var(--leads); }
 .key.sessions { background: var(--sessions); }
+.key.neutral { background: var(--grid); color: var(--ink-2); }
+.empty-ico { display: grid; place-items: center; width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 14px; background: var(--accent-wash); color: var(--accent); }
 .refreshing { opacity: .55; transition: opacity .2s; }
 .empty-state { text-align: center; padding: 48px 16px; }
 .empty-state p { margin: 6px 0 0; }

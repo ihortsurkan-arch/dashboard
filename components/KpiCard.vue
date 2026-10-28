@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import type { Component } from 'vue'
 import { Line } from 'vue-chartjs'
+import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-vue-next'
 
 // One cell of the metric strip: label, value, change vs previous period, daily sparkline.
 const props = defineProps<{
@@ -12,6 +14,7 @@ const props = defineProps<{
   sparkLabels?: string[]
   colorVar?: string
   hint?: string
+  icon?: Component
 }>()
 
 const tick = useThemeTick()
@@ -59,11 +62,13 @@ const options = computed(() => ({
 
 <template>
   <div class="metric">
-    <div class="title">{{ title }}</div>
+    <div class="title"><component :is="icon" v-if="icon" :size="15" :stroke-width="1.9" class="ico" :style="{ color: `var(${colorVar ?? '--sessions'})` }" />{{ title }}</div>
     <div class="value" :class="{ none: value == null }">{{ value == null ? 'Немає даних' : fmt(value) }}</div>
     <div class="delta">
       <span v-if="delta != null" class="chg" :class="good === true ? 'up' : good === false ? 'down' : ''">
-        <span aria-hidden="true">{{ delta > 0 ? '▲' : delta < 0 ? '▼' : '' }}</span>
+        <ArrowUpRight v-if="delta > 0" :size="14" :stroke-width="2.25" aria-hidden="true" />
+        <ArrowDownRight v-else-if="delta < 0" :size="14" :stroke-width="2.25" aria-hidden="true" />
+        <Minus v-else :size="14" :stroke-width="2.25" aria-hidden="true" />
         {{ delta > 0 ? '+' : delta < 0 ? '−' : '' }}{{ fmtPct(Math.abs(delta), 1) }}
       </span>
       <span class="prev">було {{ fmt(prev) }}</span>
@@ -78,10 +83,11 @@ const options = computed(() => ({
 <style scoped>
 .metric { display: flex; flex-direction: column; min-width: 0; padding: 18px 20px 14px; }
 .title { font-size: 13.5px; color: var(--ink-2); line-height: 1.3; min-height: 2.6em; }
+.ico { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .value { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-top: 4px; }
 .value.none { font-size: 17px; font-weight: 500; color: var(--ink-3); padding: 8px 0 4px; }
 .delta { font-size: 13px; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; color: var(--ink-3); }
-.chg { font-weight: 600; color: var(--ink-2); }
+.chg { font-weight: 600; color: var(--ink-2); display: inline-flex; align-items: center; gap: 2px; }
 .chg.up { color: var(--good); }
 .chg.down { color: var(--bad); }
 .spark { height: 40px; margin-top: 12px; }
