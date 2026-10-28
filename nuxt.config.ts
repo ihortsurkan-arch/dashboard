@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   modules: ['nuxt-auth-utils'],
   css: ['~/assets/main.css'],
   app: {
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       title: 'Landing Stats',
       htmlAttrs: { lang: 'uk' },

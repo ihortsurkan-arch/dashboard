@@ -124,3 +124,26 @@ label.field { display: grid; gap: 5px; font-size: 13px; color: var(--ink-2); }
   .skeleton { animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .5; } }
 }
+
+/* ---- Motion ----
+   One orchestrated moment on load (metric strip + charts), short feedback on actions,
+   nothing that loops. All of it is skipped under prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter-active, .page-leave-active { transition: opacity .18s ease, transform .18s ease; }
+  .page-enter-from { opacity: 0; transform: translateY(4px); }
+  .page-leave-to { opacity: 0; }
+
+  .btn { transition: border-color .15s, background-color .15s, color .15s, transform .08s, filter .15s; }
+  .btn:active:not(:disabled) { transform: scale(.97); }
+
+  .expand-enter-active, .expand-leave-active { transition: opacity .2s ease, transform .2s ease; }
+  .expand-enter-from, .expand-leave-to { opacity: 0; transform: translateY(-4px); }
+
+  .list-enter-active, .list-leave-active { transition: opacity .25s ease, transform .25s ease; }
+  .list-enter-from { opacity: 0; transform: translateX(-8px); }
+  .list-leave-to { opacity: 0; transform: translateX(8px); }
+  .list-move { transition: transform .25s ease; }
+
+  .toast-enter-active, .toast-leave-active { transition: opacity .2s ease, transform .2s ease; }
+  .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-6px); }
+}

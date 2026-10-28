@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BarChart3, Check, Globe, KeyRound, LoaderCircle, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, User as UserIcon, UserPlus, Users, X } from 'lucide-vue-next'
+import { BarChart3, Check, CircleAlert, CircleCheck, Globe, KeyRound, LoaderCircle, Pencil, Plus, RefreshCw, ShieldCheck, Trash2, User as UserIcon, UserPlus, Users, X } from 'lucide-vue-next'
 interface Landing { id: number; name: string; hostname: string }
 interface User { id: number; login: string; role: 'admin' | 'user'; created_at: string; landing_ids: number[] }
 
@@ -98,8 +98,8 @@ async function deleteLanding(l: Landing) {
       <button role="tab" :aria-selected="tab === 'landings'" :class="{ on: tab === 'landings' }" @click="tab = 'landings'"><Globe :size="16" :stroke-width="1.75" />Лендинги ({{ landings?.length ?? 0 }})</button>
     </div>
 
-    <p v-if="msg" class="flash ok">{{ msg }}</p>
-    <p v-if="err" class="flash error" role="alert">{{ err }}</p>
+    <Transition name="toast"><p v-if="msg" class="flash ok"><CircleCheck :size="16" :stroke-width="2" />{{ msg }}</p></Transition>
+    <Transition name="toast"><p v-if="err" class="flash error" role="alert"><CircleAlert :size="16" :stroke-width="2" />{{ err }}</p></Transition>
 
     <!-- USERS -->
     <template v-if="tab === 'users'">
@@ -123,7 +123,7 @@ async function deleteLanding(l: Landing) {
         <p class="muted tiny">Пароль щонайменше 8 символів. Передайте його користувачу окремо — тут він більше не показується.</p>
       </section>
 
-      <section class="card list">
+      <TransitionGroup tag="section" name="list" class="card list">
         <div v-for="u in users" :key="u.id" class="item">
           <div class="item-head">
             <div class="who-l">
@@ -144,6 +144,7 @@ async function deleteLanding(l: Landing) {
               <button v-if="u.id !== me?.id" class="btn sm danger" @click="deleteUser(u)"><Trash2 :size="15" :stroke-width="1.9" />Видалити</button>
             </div>
           </div>
+          <Transition name="expand">
           <div v-if="editing === u.id" class="edit">
             <div class="form">
               <label class="field">Роль
@@ -160,8 +161,9 @@ async function deleteLanding(l: Landing) {
               <button class="btn sm" @click="editing = null"><X :size="15" :stroke-width="1.9" />Скасувати</button>
             </div>
           </div>
+          </Transition>
         </div>
-      </section>
+      </TransitionGroup>
     </template>
 
     <!-- LANDINGS -->
@@ -184,8 +186,8 @@ async function deleteLanding(l: Landing) {
         </div>
       </section>
 
-      <section class="card list">
-        <p v-if="!landings?.length" class="muted">Лендингів ще немає.</p>
+      <p v-if="!landings?.length" class="card muted">Лендингів ще немає.</p>
+      <TransitionGroup v-else tag="section" name="list" class="card list">
         <div v-for="l in landings" :key="l.id" class="item">
           <div v-if="editingL !== l.id" class="item-head">
             <div class="who-l"><span class="avatar site"><Globe :size="16" :stroke-width="1.9" /></span><div><b>{{ l.name }}</b><div class="muted tiny">{{ l.hostname }}</div></div></div>
@@ -206,7 +208,7 @@ async function deleteLanding(l: Landing) {
             </div>
           </div>
         </div>
-      </section>
+      </TransitionGroup>
     </template>
   </div>
 </template>
@@ -239,7 +241,7 @@ async function deleteLanding(l: Landing) {
 .role { font-size: 11.5px; padding: 1px 8px; border-radius: 99px; margin-left: 6px; background: var(--grid); color: var(--ink-2); }
 .role.admin { background: var(--accent-wash); color: var(--accent); }
 .edit { display: grid; gap: 12px; padding: 12px; border-radius: 8px; background: var(--page); }
-.flash { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--hair); font-size: 14px; }
+.flash { display: flex; align-items: center; gap: 8px; margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--hair); font-size: 14px; }
 .flash.ok { color: var(--good); }
 .hosts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 </style>

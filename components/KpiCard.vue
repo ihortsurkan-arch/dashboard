@@ -15,7 +15,12 @@ const props = defineProps<{
   colorVar?: string
   hint?: string
   icon?: Component
+  /** Position in the strip; staggers the page-load sequence. */
+  order?: number
 }>()
+
+const delay = computed(() => (props.order ?? 0) * 70)
+const counted = useCountUp(() => props.value, { duration: 900, delay: (props.order ?? 0) * 70 })
 
 const tick = useThemeTick()
 const fmt = (v: number | null) =>
@@ -61,9 +66,9 @@ const options = computed(() => ({
 </script>
 
 <template>
-  <div class="metric">
+  <div class="metric" :style="{ '--d': `${delay}ms` }">
     <div class="title"><component :is="icon" v-if="icon" :size="15" :stroke-width="1.9" class="ico" :style="{ color: `var(${colorVar ?? '--sessions'})` }" />{{ title }}</div>
-    <div class="value" :class="{ none: value == null }">{{ value == null ? 'Немає даних' : fmt(value) }}</div>
+    <div class="value" :class="{ none: value == null }">{{ value == null ? 'Немає даних' : fmt(counted ?? value) }}</div>
     <div class="delta">
       <span v-if="delta != null" class="chg" :class="good === true ? 'up' : good === false ? 'down' : ''">
         <ArrowUpRight v-if="delta > 0" :size="14" :stroke-width="2.25" aria-hidden="true" />
@@ -82,6 +87,16 @@ const options = computed(() => ({
 
 <style scoped>
 .metric { display: flex; flex-direction: column; min-width: 0; padding: 18px 20px 14px; }
+/* Page-load sequence: cells rise in turn, the number counts up, the delta lands,
+   then the sparkline draws left to right. Runs once per mount; refreshes only tween the number. */
+@media (prefers-reduced-motion: no-preference) {
+  .metric { animation: rise .5s cubic-bezier(.2, .7, .2, 1) var(--d) both; }
+  .delta { animation: fade .35s ease-out calc(var(--d) + 600ms) both; }
+  .spark { animation: draw .9s cubic-bezier(.4, 0, .2, 1) calc(var(--d) + 250ms) both; }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 .title { font-size: 13.5px; color: var(--ink-2); line-height: 1.3; min-height: 2.6em; }
 .ico { display: inline-block; vertical-align: -3px; margin-right: 6px; }
 .value { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; margin-top: 4px; }

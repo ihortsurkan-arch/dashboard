@@ -55,6 +55,8 @@ async function submit() {
 <style scoped>
 .wrap { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
 .box { width: min(100%, 380px); padding: 28px; }
+@media (prefers-reduced-motion: no-preference) { .box { animation: rise .45s cubic-bezier(.2, .7, .2, 1) both; } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px) scale(.99); } }
 .head { text-align: center; margin-bottom: 20px; }
 .head h1 { font-size: 22px; margin-top: 10px; }
 .head p { margin: 4px 0 0; font-size: 14px; }

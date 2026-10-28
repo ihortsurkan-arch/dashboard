@@ -143,16 +143,16 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
 
       <div v-else class="body" :class="{ refreshing: loading }">
         <section class="card strip" aria-label="Ключові показники">
-          <KpiCard :icon="MousePointerClick" title="Sessions" :value="s.kpis.sessions.value" :prev="s.kpis.sessions.prev" format="int"
+          <KpiCard :icon="MousePointerClick" :order="0" title="Sessions" :value="s.kpis.sessions.value" :prev="s.kpis.sessions.prev" format="int"
                    :spark="s.daily.map((d) => d.sessions)" :spark-labels="dayLabels" color-var="--sessions" />
-          <KpiCard :icon="Target" title="Leads" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
+          <KpiCard :icon="Target" :order="1" title="Leads" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
                    :spark="s.daily.map((d) => d.leads)" :spark-labels="dayLabels" color-var="--leads" />
-          <KpiCard :icon="Timer" title="Avg. Session Duration" :value="s.kpis.avgSessionDuration.value" :prev="s.kpis.avgSessionDuration.prev" format="duration"
+          <KpiCard :icon="Timer" :order="2" title="Avg. Session Duration" :value="s.kpis.avgSessionDuration.value" :prev="s.kpis.avgSessionDuration.prev" format="duration"
                    :spark="s.daily.map((d) => d.avgSessionDuration)" :spark-labels="dayLabels" color-var="--sessions" />
-          <KpiCard :icon="Hourglass" title="Avg. Session Duration for Leads" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
+          <KpiCard :icon="Hourglass" :order="3" title="Avg. Session Duration for Leads" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
                    :prev="s.kpis.leads.prev ? s.kpis.avgSessionDurationLeads.prev : null" format="duration"
                    :spark="s.daily.map((d) => d.avgSessionDurationLeads)" :spark-labels="dayLabels" color-var="--leads" hint="Немає лідів за період" />
-          <KpiCard :icon="CornerUpLeft" title="Bounce rate" :value="s.kpis.sessions.value ? s.kpis.bounceRate.value : null" :prev="s.kpis.sessions.prev ? s.kpis.bounceRate.prev : null"
+          <KpiCard :icon="CornerUpLeft" :order="4" title="Bounce rate" :value="s.kpis.sessions.value ? s.kpis.bounceRate.value : null" :prev="s.kpis.sessions.prev ? s.kpis.bounceRate.prev : null"
                    format="pct" good-when="down" :spark="s.daily.map((d) => d.bounceRate)" :spark-labels="dayLabels" color-var="--sessions" />
         </section>
 
