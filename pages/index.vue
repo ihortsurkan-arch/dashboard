@@ -102,115 +102,126 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
     </div>
 
     <template v-else>
-      <section class="toolbar card">
+      <section class="filters" aria-label="Фільтри">
         <label class="field landing">Лендинг
           <select v-model.number="landingId" class="input">
-            <option v-for="l in landings" :key="l.id" :value="l.id">{{ l.name }} — {{ l.hostname }}</option>
+            <option v-for="l in landings" :key="l.id" :value="l.id">{{ l.name }} ({{ l.hostname }})</option>
           </select>
         </label>
-        <div class="dates">
-          <label class="field">З
-            <input v-model="draftFrom" class="input" type="date" min="2015-08-14" :max="today()" @keydown.enter="applyDates">
-          </label>
-          <label class="field">По
-            <input v-model="draftTo" class="input" type="date" min="2015-08-14" :max="today()" @keydown.enter="applyDates">
-          </label>
-          <button class="btn primary apply" :disabled="!draftValid || !draftChanged" @click="applyDates">Застосувати</button>
-        </div>
-        <div class="presets" role="group" aria-label="Швидкий вибір періоду">
-          <button v-for="p in presets" :key="p.id" class="btn sm" :class="{ on: activePreset === p.id }" @click="applyPreset(p)">{{ p.label }}</button>
+        <div class="period">
+          <div class="presets" role="group" aria-label="Швидкий вибір періоду">
+            <button v-for="p in presets" :key="p.id" class="preset" :aria-pressed="activePreset === p.id" @click="applyPreset(p)">{{ p.label }}</button>
+          </div>
+          <div class="dates">
+            <label class="field">З
+              <input v-model="draftFrom" class="input" type="date" min="2015-08-14" :max="today()" @keydown.enter="applyDates">
+            </label>
+            <label class="field">По
+              <input v-model="draftTo" class="input" type="date" min="2015-08-14" :max="today()" @keydown.enter="applyDates">
+            </label>
+            <button class="btn primary apply" :disabled="!draftValid || !draftChanged" @click="applyDates">Показати</button>
+          </div>
         </div>
       </section>
 
-      <div class="head">
-        <div>
-          <h1>{{ s?.landing.name ?? landings.find((l) => l.id === landingId)?.name }}</h1>
-          <p v-if="s" class="muted">
-            {{ fmtRange(s.range.from, s.range.to) }} · порівняння з {{ fmtRange(s.prev.from, s.prev.to) }}
-            <span v-if="s.mock" class="badge">демо-дані</span>
-          </p>
-        </div>
-        <span v-if="loading && s" class="muted small">Оновлення…</span>
-      </div>
+      <header class="head">
+        <h1>{{ s?.landing.name ?? landings.find((l) => l.id === landingId)?.name }}</h1>
+        <p v-if="s" class="range">
+          {{ fmtRange(s.range.from, s.range.to) }}, порівняння з {{ fmtRange(s.prev.from, s.prev.to) }}
+          <span v-if="s.mock" class="badge">демо-дані</span>
+          <span v-if="loading" class="updating">оновлюємо…</span>
+        </p>
+      </header>
 
       <div v-if="error" class="card error" role="alert">{{ error }}</div>
 
-      <div v-else-if="!s" class="kpis">
-        <div v-for="i in 5" :key="i" class="card skeleton-card"><div class="skeleton" style="height: 100px" /></div>
+      <div v-else-if="!s" class="card strip">
+        <div v-for="i in 5" :key="i" class="cell-skel"><div class="skeleton" style="height: 96px" /></div>
       </div>
 
-      <div v-else :class="{ refreshing: loading }">
-        <section class="kpis" aria-label="Ключові показники">
+      <div v-else class="body" :class="{ refreshing: loading }">
+        <section class="card strip" aria-label="Ключові показники">
           <KpiCard title="Sessions" :value="s.kpis.sessions.value" :prev="s.kpis.sessions.prev" format="int"
-                   :spark="s.daily.map((d) => d.sessions)" :spark-labels="dayLabels" />
+                   :spark="s.daily.map((d) => d.sessions)" :spark-labels="dayLabels" color-var="--sessions" />
           <KpiCard title="Leads" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
-                   :spark="s.daily.map((d) => d.leads)" :spark-labels="dayLabels" />
+                   :spark="s.daily.map((d) => d.leads)" :spark-labels="dayLabels" color-var="--leads" />
           <KpiCard title="Avg. Session Duration" :value="s.kpis.avgSessionDuration.value" :prev="s.kpis.avgSessionDuration.prev" format="duration"
-                   :spark="s.daily.map((d) => d.avgSessionDuration)" :spark-labels="dayLabels" />
+                   :spark="s.daily.map((d) => d.avgSessionDuration)" :spark-labels="dayLabels" color-var="--sessions" />
           <KpiCard title="Avg. Session Duration for Leads" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
                    :prev="s.kpis.leads.prev ? s.kpis.avgSessionDurationLeads.prev : null" format="duration"
-                   :spark="s.daily.map((d) => d.avgSessionDurationLeads)" :spark-labels="dayLabels" hint="Немає лідів за період" />
+                   :spark="s.daily.map((d) => d.avgSessionDurationLeads)" :spark-labels="dayLabels" color-var="--leads" hint="Немає лідів за період" />
           <KpiCard title="Bounce rate" :value="s.kpis.sessions.value ? s.kpis.bounceRate.value : null" :prev="s.kpis.sessions.prev ? s.kpis.bounceRate.prev : null"
-                   format="pct" good-when="down" :spark="s.daily.map((d) => d.bounceRate)" :spark-labels="dayLabels" />
+                   format="pct" good-when="down" :spark="s.daily.map((d) => d.bounceRate)" :spark-labels="dayLabels" color-var="--sessions" />
         </section>
 
-        <h2 class="section">Ліди <span class="muted small">подія {{ s.leadEvent }}</span></h2>
-        <div class="grid-3">
-          <div class="card">
-            <h3>Leads by Source</h3>
-            <p class="note">Частка лідів за джерелом сесії</p>
-            <PieChart v-bind="lv(s.leadsBySource)" series-name="Leads" />
+        <section id="leads" class="section">
+          <div class="section-head">
+            <h2><span class="key leads" aria-hidden="true" />Ліди</h2>
+            <p class="muted">Подія <code>{{ s.leadEvent }}</code> у GA4</p>
           </div>
-          <div class="card">
-            <h3>Leads by Device</h3>
-            <p class="note">Ліди за типом пристрою</p>
-            <BarsChart v-bind="lv(s.leadsByDevice)" horizontal series-name="Leads" color-var="--c2" />
+          <div class="grid-3">
+            <div class="card">
+              <h3>Leads by Source</h3>
+              <p class="note">Частка лідів за джерелом сесії</p>
+              <PieChart v-bind="lv(s.leadsBySource)" series-name="Leads by Source" />
+            </div>
+            <div class="card">
+              <h3>Leads by Device</h3>
+              <p class="note">Ліди за типом пристрою</p>
+              <BarsChart v-bind="lv(s.leadsByDevice)" horizontal series-name="Leads" color-var="--leads" />
+            </div>
+            <div class="card">
+              <h3>Leads by Channel</h3>
+              <p class="note">Ліди за каналом GA4</p>
+              <BarsChart v-bind="lv(s.leadsByChannel)" horizontal series-name="Leads" color-var="--leads" />
+            </div>
           </div>
-          <div class="card">
-            <h3>Leads by Channel</h3>
-            <p class="note">Ліди за каналом GA4</p>
-            <BarsChart v-bind="lv(s.leadsByChannel)" horizontal series-name="Leads" color-var="--c2" />
+          <div class="grid-2">
+            <div class="card">
+              <h3>Leads Daily</h3>
+              <p class="note">Ліди по днях</p>
+              <BarsChart :labels="dayLabels" :values="s.daily.map((d) => d.leads)" series-name="Leads" color-var="--leads" />
+            </div>
+            <div class="card">
+              <h3>Leads Monthly</h3>
+              <p class="note">Ліди по місяцях у межах періоду</p>
+              <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.leads)" series-name="Leads" color-var="--leads" />
+            </div>
           </div>
-        </div>
-        <div class="grid-2 mt">
-          <div class="card">
-            <h3>Leads Daily</h3>
-            <p class="note">Ліди по днях</p>
-            <BarsChart :labels="dayLabels" :values="s.daily.map((d) => d.leads)" series-name="Leads" color-var="--c2" />
-          </div>
-          <div class="card">
-            <h3>Leads Monthly</h3>
-            <p class="note">Ліди по місяцях у межах періоду</p>
-            <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.leads)" series-name="Leads" color-var="--c2" />
-          </div>
-        </div>
+        </section>
 
-        <h2 class="section">Сесії</h2>
-        <div class="grid-2">
-          <div class="card">
-            <h3>Sessions by Device</h3>
-            <p class="note">Сесії за типом пристрою</p>
-            <BarsChart v-bind="lv(s.sessionsByDevice)" horizontal series-name="Sessions" />
+        <section id="sessions" class="section">
+          <div class="section-head">
+            <h2><span class="key sessions" aria-hidden="true" />Сесії</h2>
           </div>
-          <div class="card">
-            <h3>Sessions by Channel</h3>
-            <p class="note">Сесії за каналом GA4</p>
-            <BarsChart v-bind="lv(s.sessionsByChannel)" horizontal series-name="Sessions" />
+          <div class="grid-2">
+            <div class="card">
+              <h3>Sessions by Device</h3>
+              <p class="note">Сесії за типом пристрою</p>
+              <BarsChart v-bind="lv(s.sessionsByDevice)" horizontal series-name="Sessions" color-var="--sessions" />
+            </div>
+            <div class="card">
+              <h3>Sessions by Channel</h3>
+              <p class="note">Сесії за каналом GA4</p>
+              <BarsChart v-bind="lv(s.sessionsByChannel)" horizontal series-name="Sessions" color-var="--sessions" />
+            </div>
+            <div class="card">
+              <h3>Sessions Daily</h3>
+              <p class="note">Сесії по днях</p>
+              <BarsChart :labels="dayLabels" :values="s.daily.map((d) => d.sessions)" series-name="Sessions" color-var="--sessions" />
+            </div>
+            <div class="card">
+              <h3>Sessions Monthly</h3>
+              <p class="note">Сесії по місяцях у межах періоду</p>
+              <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.sessions)" series-name="Sessions" color-var="--sessions" />
+            </div>
           </div>
-          <div class="card">
-            <h3>Sessions Daily</h3>
-            <p class="note">Сесії по днях</p>
-            <BarsChart :labels="dayLabels" :values="s.daily.map((d) => d.sessions)" series-name="Sessions" />
-          </div>
-          <div class="card">
-            <h3>Sessions Monthly</h3>
-            <p class="note">Сесії по місяцях у межах періоду</p>
-            <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.sessions)" series-name="Sessions" />
-          </div>
-        </div>
+        </section>
 
-        <h2 class="section">Джерела трафіку</h2>
-        <div class="tables">
+        <section id="sources" class="section">
+          <div class="section-head">
+            <h2>Джерела трафіку</h2>
+          </div>
           <div class="card">
             <h3>Referrers Stats</h3>
             <p class="note">Сторінка, з якої прийшов відвідувач</p>
@@ -218,51 +229,77 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
               :columns="[{ key: 'referrer', label: 'Page referrer', emptyLabel: '(без реферера)' }, { key: 'sessions', label: 'Sessions', numeric: true }, { key: 'events', label: 'Event count', numeric: true }]"
               :rows="s.referrers.rows" :total="s.referrers.total" />
           </div>
-          <div class="card">
-            <h3>Source</h3>
-            <p class="note">UTM source сесії</p>
-            <DataTable
-              :columns="[{ key: 'source', label: 'UTM_Source' }, { key: 'sessions', label: 'Sessions', numeric: true }, { key: 'events', label: 'Event count', numeric: true }]"
-              :rows="s.sources.rows" :total="s.sources.total" />
+          <div class="grid-2 tables">
+            <div class="card">
+              <h3>Source</h3>
+              <p class="note">UTM source сесії</p>
+              <DataTable
+                :columns="[{ key: 'source', label: 'UTM_Source' }, { key: 'sessions', label: 'Sessions', numeric: true }, { key: 'events', label: 'Event count', numeric: true }]"
+                :rows="s.sources.rows" :total="s.sources.total" />
+            </div>
+            <div class="card">
+              <h3>Source + Campaign</h3>
+              <p class="note">UTM source і campaign сесії</p>
+              <DataTable
+                :columns="[{ key: 'source', label: 'UTM_Source' }, { key: 'campaign', label: 'UTM_Campaign' }, { key: 'sessions', label: 'Sessions', numeric: true }, { key: 'events', label: 'Event count', numeric: true }]"
+                :rows="s.sourceCampaign.rows" :total="s.sourceCampaign.total" />
+            </div>
           </div>
-          <div class="card">
-            <h3>Source + Campaign</h3>
-            <p class="note">UTM source і campaign сесії</p>
-            <DataTable
-              :columns="[{ key: 'source', label: 'UTM_Source' }, { key: 'campaign', label: 'UTM_Campaign' }, { key: 'sessions', label: 'Sessions', numeric: true }, { key: 'events', label: 'Event count', numeric: true }]"
-              :rows="s.sourceCampaign.rows" :total="s.sourceCampaign.total" />
-          </div>
-        </div>
+        </section>
       </div>
     </template>
   </div>
 </template>
 
 <style scoped>
-.page { padding-top: 16px; padding-bottom: 48px; display: grid; gap: 16px; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; padding: 14px 16px; }
-.landing { flex: 1 1 260px; }
+.page { padding-top: 20px; padding-bottom: 56px; display: grid; gap: 18px; }
+.filters { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; padding-bottom: 18px; border-bottom: 1px solid var(--hair); }
+.landing { flex: 1 1 280px; max-width: 420px; }
 .landing select { width: 100%; }
-.dates { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; }
-.presets { display: flex; gap: 6px; flex-wrap: wrap; flex-basis: 100%; }
-.presets .on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
-.head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.head h1 { font-size: 22px; }
-.head p { margin: 4px 0 0; font-size: 13.5px; }
-.badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 12px; }
-.small { font-size: 13px; font-weight: 400; }
-.kpis { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
-.section { font-size: 17px; margin: 28px 0 12px; display: flex; gap: 10px; align-items: baseline; }
-.mt { margin-top: 16px; }
-.tables { display: grid; gap: 16px; }
+.period { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }
+.presets { display: flex; gap: 2px; padding: 3px; background: var(--hair); border-radius: 10px; flex-wrap: wrap; }
+.preset { all: unset; cursor: pointer; padding: 6px 11px; border-radius: 7px; font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.preset:hover { color: var(--ink); }
+.preset[aria-pressed='true'] { background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, .08); }
+.preset:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.dates { display: flex; gap: 8px; align-items: flex-end; }
+.head { display: grid; gap: 6px; padding-top: 6px; }
+.head h1 { font-size: clamp(26px, 3.2vw, 36px); }
+.range { margin: 0; color: var(--ink-2); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.badge { padding: 1px 9px; border-radius: 99px; background: var(--accent-wash); color: var(--accent); font-size: 12px; font-weight: 600; }
+.updating { color: var(--ink-3); font-size: 13px; }
+.strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0; overflow: hidden; }
+.strip > :deep(.metric) + :deep(.metric), .cell-skel + .cell-skel { border-left: 1px solid var(--hair); }
+.cell-skel { padding: 18px 20px; }
+.body { display: grid; gap: 18px; }
+.section { display: grid; gap: 14px; margin-top: 18px; }
+.section-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.section-head h2 { display: flex; align-items: center; gap: 10px; }
+.section-head p { margin: 0; font-size: 13.5px; }
+.section-head code { font-family: inherit; font-weight: 600; color: var(--ink-2); }
+.key { width: 12px; height: 12px; border-radius: 3px; }
+.key.leads { background: var(--leads); }
+.key.sessions { background: var(--sessions); }
 .refreshing { opacity: .55; transition: opacity .2s; }
 .empty-state { text-align: center; padding: 48px 16px; }
 .empty-state p { margin: 6px 0 0; }
-.skeleton-card { padding: 16px; }
-@media (max-width: 600px) {
-  .dates { width: 100%; }
-  .dates .field { flex: 1 1 130px; }
+@media (max-width: 1100px) {
+  .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .strip > :deep(.metric) { border-top: 1px solid var(--hair); border-left: 1px solid var(--hair); }
+  .strip > :deep(.metric:nth-child(-n+3)) { border-top: none; }
+  .strip > :deep(.metric:nth-child(3n+1)) { border-left: none; }
+}
+@media (max-width: 640px) {
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip > :deep(.metric) { border-top: 1px solid var(--hair) !important; border-left: 1px solid var(--hair) !important; }
+  .strip > :deep(.metric:nth-child(-n+2)) { border-top: none !important; }
+  .strip > :deep(.metric:nth-child(2n+1)) { border-left: none !important; }
+  .strip > :deep(.metric:last-child:nth-child(odd)) { grid-column: 1 / -1; }
+  .filters { gap: 12px; }
+  .landing { max-width: none; }
+  .period, .dates { width: 100%; }
+  .dates .field { flex: 1 1 0; }
   .dates .input { width: 100%; }
-  .apply { flex: 1 1 100%; justify-content: center; }
+  .apply { align-self: flex-end; }
 }
 </style>

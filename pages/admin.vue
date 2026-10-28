@@ -209,28 +209,28 @@ async function deleteLanding(l: Landing) {
 
 <style scoped>
 .page { padding-top: 16px; padding-bottom: 48px; display: grid; gap: 16px; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
-.tabs button { all: unset; cursor: pointer; padding: 10px 14px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; font-size: 14px; }
-.tabs button.on { color: var(--fg); border-color: var(--accent); }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--hair); overflow-x: auto; }
+.tabs button { all: unset; cursor: pointer; padding: 10px 14px; color: var(--ink-2); border-bottom: 2px solid transparent; white-space: nowrap; font-size: 14px; }
+.tabs button.on { color: var(--ink); border-color: var(--accent); }
 .card { display: grid; gap: 12px; }
 .card > .btn { justify-self: start; }
 .form { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .grow { flex: 1; }
-.checks { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); margin: 0; }
-.checks legend { font-size: 13px; color: var(--muted); padding: 0 4px; }
+.checks { border: 1px solid var(--hair); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); margin: 0; }
+.checks legend { font-size: 13px; color: var(--ink-2); padding: 0 4px; }
 .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .tiny { font-size: 12.5px; margin: 0; }
 .note { margin: -8px 0 0; }
 .list { gap: 0; padding: 4px 18px; }
-.item { padding: 12px 0; border-bottom: 1px solid var(--line); display: grid; gap: 12px; }
+.item { padding: 12px 0; border-bottom: 1px solid var(--hair); display: grid; gap: 12px; }
 .item:last-child { border-bottom: none; }
 .item-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; flex-wrap: wrap; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.role { font-size: 11.5px; padding: 1px 8px; border-radius: 99px; margin-left: 6px; background: var(--grid); color: var(--muted); }
-.role.admin { background: var(--accent-soft); color: var(--accent); }
-.edit { display: grid; gap: 12px; padding: 12px; border-radius: 8px; background: var(--bg); }
-.flash { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line); font-size: 14px; }
-.flash.ok { color: var(--ok); }
+.role { font-size: 11.5px; padding: 1px 8px; border-radius: 99px; margin-left: 6px; background: var(--grid); color: var(--ink-2); }
+.role.admin { background: var(--accent-wash); color: var(--accent); }
+.edit { display: grid; gap: 12px; padding: 12px; border-radius: 8px; background: var(--page); }
+.flash { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--hair); font-size: 14px; }
+.flash.ok { color: var(--good); }
 .hosts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 </style>

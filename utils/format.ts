@@ -43,4 +43,4 @@ export function cssVar(name: string) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'
 }
 
-export const SERIES = ['--c1', '--c2', '--c3', '--c4', '--c5', '--c6', '--c7', '--c8']
+export const SERIES = ['--c1', '--c2', '--c3', '--c4', '--c5', '--c6']

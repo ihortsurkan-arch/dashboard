@@ -50,7 +50,7 @@ async function submit() {
 .head { text-align: center; margin-bottom: 20px; }
 .head h1 { font-size: 22px; margin-top: 10px; }
 .head p { margin: 4px 0 0; font-size: 14px; }
-.logo { display: inline-block; width: 40px; height: 40px; border-radius: 11px; background: conic-gradient(from 210deg, var(--c1), var(--c2), var(--c3), var(--c1)); }
+.logo { display: inline-block; width: 40px; height: 40px; border-radius: 11px; background: var(--accent); mask: radial-gradient(circle at 70% 30%, transparent 0 22%, #000 23%); }
 .form { display: grid; gap: 14px; }
 .full { justify-content: center; width: 100%; padding: 10px; }
 .error { margin: 0; }

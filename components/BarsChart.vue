@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Bar } from 'vue-chartjs'
 
+// One series per chart, coloured by the metric (Sessions blue, Leads orange).
+// Horizontal bars carry their value at the bar end; vertical time bars rely on axis + tooltip.
 const props = defineProps<{
   labels: string[]
   values: number[]
@@ -11,7 +13,25 @@ const props = defineProps<{
 const tick = useThemeTick()
 
 const empty = computed(() => !props.values.some((v) => v > 0))
-const height = computed(() => props.horizontal ? Math.max(120, props.labels.length * 34 + 30) : 240)
+const height = computed(() => (props.horizontal ? Math.max(110, props.labels.length * 36 + 36) : 240))
+
+// Draws each bar's value just past its end (horizontal charts only).
+const endLabels = {
+  id: 'endLabels',
+  afterDatasetsDraw(chart: any) {
+    if (!props.horizontal) return
+    const { ctx } = chart
+    const meta = chart.getDatasetMeta(0)
+    ctx.save()
+    ctx.font = `500 12px Onest, system-ui, sans-serif`
+    ctx.fillStyle = cssVar('--ink-2')
+    ctx.textBaseline = 'middle'
+    meta.data.forEach((bar: any, i: number) => {
+      ctx.fillText(fmtInt(props.values[i]), bar.x + 6, bar.y)
+    })
+    ctx.restore()
+  },
+}
 
 const data = computed(() => {
   void tick.value
@@ -20,9 +40,12 @@ const data = computed(() => {
     datasets: [{
       label: props.seriesName,
       data: props.values,
-      backgroundColor: cssVar(props.colorVar ?? '--c1'),
-      borderRadius: 4,
-      maxBarThickness: 32,
+      backgroundColor: cssVar(props.colorVar ?? '--sessions'),
+      borderRadius: { topLeft: props.horizontal ? 0 : 4, topRight: 4, bottomRight: props.horizontal ? 4 : 0, bottomLeft: 0 },
+      borderSkipped: 'start' as const,
+      maxBarThickness: props.horizontal ? 18 : 22,
+      categoryPercentage: 0.8,
+      barPercentage: 0.9,
     }],
   }
 })
@@ -30,17 +53,34 @@ const data = computed(() => {
 const options = computed(() => {
   void tick.value
   const grid = cssVar('--grid')
-  const muted = cssVar('--muted')
-  const valueAxis = { beginAtZero: true, grid: { color: grid }, border: { display: false }, ticks: { color: muted, precision: 0 } }
-  const catAxis = { grid: { display: false }, ticks: { color: muted, autoSkip: true, maxRotation: 0 } }
+  const tickColor = cssVar('--ink-3')
+  const max = Math.max(...props.values, 1)
+  const valueAxis = {
+    beginAtZero: true,
+    // Room for the end labels on horizontal bars
+    suggestedMax: props.horizontal ? max * 1.15 : undefined,
+    grid: { color: grid, drawTicks: false },
+    border: { display: false },
+    ticks: { color: tickColor, precision: 0, padding: 6, maxTicksLimit: 6 },
+  }
+  const catAxis = {
+    grid: { display: false },
+    border: { color: cssVar('--axis') },
+    ticks: { color: props.horizontal ? cssVar('--ink-2') : tickColor, autoSkip: true, maxRotation: 0, padding: 6 },
+  }
   return {
     indexAxis: props.horizontal ? ('y' as const) : ('x' as const),
     responsive: true,
     maintainAspectRatio: false,
+    layout: { padding: { right: props.horizontal ? 8 : 0 } },
     plugins: {
       legend: { display: false },
-      tooltip: { callbacks: { label: (c: any) => ` ${props.seriesName}: ${fmtInt(c.raw)}` } },
+      tooltip: {
+        displayColors: false,
+        callbacks: { label: (c: any) => `${props.seriesName}: ${fmtInt(c.raw)}` },
+      },
     },
+    interaction: { mode: 'index' as const, intersect: false, axis: props.horizontal ? ('y' as const) : ('x' as const) },
     scales: props.horizontal ? { x: valueAxis, y: catAxis } : { x: catAxis, y: valueAxis },
   }
 })
@@ -49,6 +89,6 @@ const options = computed(() => {
 <template>
   <div v-if="empty" class="empty">Немає даних за обраний період</div>
   <div v-else :style="{ height: height + 'px' }">
-    <Bar :data="data" :options="options" />
+    <Bar :data="data" :options="options" :plugins="[endLabels]" role="img" :aria-label="seriesName" />
   </div>
 </template>

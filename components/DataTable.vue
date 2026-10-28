@@ -86,9 +86,9 @@ const ariaSort = (key: string) => sortKey.value !== key ? 'none' : sortDir.value
 <style scoped>
 .scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
-th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--hair); text-align: left; }
 td { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-th { font-weight: 600; font-size: 12.5px; color: var(--muted); white-space: nowrap; background: var(--grid); }
+th { font-weight: 600; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; background: var(--grid); }
 .numeric { text-align: right; }
 .idx { width: 1%; white-space: nowrap; }
 tfoot td { font-weight: 650; border-bottom: none; }

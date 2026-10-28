@@ -34,13 +34,13 @@ async function logout() {
 </template>
 
 <style scoped>
-.topbar { background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--hair); position: sticky; top: 0; z-index: 10; }
 .bar { display: flex; align-items: center; gap: 20px; height: 56px; }
-.brand { display: flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 650; }
-.logo { width: 22px; height: 22px; border-radius: 6px; background: conic-gradient(from 210deg, var(--c1), var(--c2), var(--c3), var(--c1)); }
+.brand { display: flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 650; }
+.logo { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); mask: radial-gradient(circle at 70% 30%, transparent 0 22%, #000 23%); }
 .nav { display: flex; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; }
-.nav a { color: var(--muted); padding: 6px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; }
-.nav a.on { color: var(--fg); background: var(--accent-soft); }
+.nav a { color: var(--ink-2); padding: 6px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; }
+.nav a.on { color: var(--ink); background: var(--accent-wash); }
 .who { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 600px) {
   .login { display: none; }
