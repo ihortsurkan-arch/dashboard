@@ -60,7 +60,9 @@ async function deleteUser(u: User) {
 
 // ---- landings ----
 const nl = reactive({ name: '', hostname: '' })
-const { data: hostnames, pending: hostsPending, execute: loadHosts } = useLazyFetch<{ hostname: string; sessions: number }[]>('/api/admin/hostnames', { immediate: false, default: () => [] })
+const { data: hostnames, status: hostsStatus, execute: loadHosts } = useLazyFetch<{ hostname: string; sessions: number }[]>('/api/admin/hostnames', { immediate: false, default: () => [] })
+// `pending` starts true while the request is idle; only a running request counts as loading
+const hostsPending = computed(() => hostsStatus.value === 'pending')
 const unusedHosts = computed(() => (hostnames.value ?? []).filter((h) => h.hostname && !landings.value?.some((l) => l.hostname === h.hostname)))
 async function createLanding() {
   try {
