@@ -58,6 +58,10 @@ CREATE TABLE IF NOT EXISTS webauthn_challenges (
   challenge TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   id SERIAL PRIMARY KEY,
   at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -100,14 +104,43 @@ async function runner(): Promise<Runner> {
   return runnerPromise
 }
 
+/**
+ * First admin from NUXT_ADMIN_LOGIN / NUXT_ADMIN_PASSWORD while there are no users.
+ * Later, changing NUXT_ADMIN_PASSWORD in the environment (and redeploying) resets that admin's
+ * password once: only a fingerprint of the applied value is kept, so a password changed in the
+ * app is not overwritten until the variable itself changes again.
+ */
 async function ensureFirstAdmin(run: Runner) {
   const { adminLogin, adminPassword } = useRuntimeConfig()
+  if (!adminLogin || !adminPassword) return
+  const login = adminLogin.trim().toLowerCase()
+  const { createHash } = await import('node:crypto')
+  const fingerprint = createHash('sha256').update(`admin-password:${login}:${adminPassword}`).digest('hex')
+  const remember = () => run(
+    `INSERT INTO settings (key, value) VALUES ('admin_password_applied', $1)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, [fingerprint])
+
   const [{ n }] = await run('SELECT count(*)::int AS n FROM users')
-  if (n > 0 || !adminLogin || !adminPassword) return
-  await run(
-    `INSERT INTO users (login, password_hash, role) VALUES ($1, $2, 'admin') ON CONFLICT (login) DO NOTHING`,
-    [adminLogin.trim().toLowerCase(), await hashPassword(adminPassword)],
-  )
+  if (n === 0) {
+    await run(`INSERT INTO users (login, password_hash, role) VALUES ($1, $2, 'admin') ON CONFLICT (login) DO NOTHING`,
+      [login, await hashPassword(adminPassword)])
+    await remember()
+    return
+  }
+  const [applied] = await run(`SELECT value FROM settings WHERE key = 'admin_password_applied'`)
+  if (applied?.value === fingerprint) return
+  if (!applied) {
+    // First run of this version: reset only if the stored password differs from the variable
+    const [u] = await run('SELECT password_hash FROM users WHERE login = $1', [login])
+    if (u && await verifyPassword(u.password_hash, adminPassword)) { await remember(); return }
+  }
+
+  // The variable changed: reset (or recreate) this admin with the new password
+  const hash = await hashPassword(adminPassword)
+  const updated = await run(`UPDATE users SET password_hash = $2, role = 'admin', totp_enabled = FALSE, totp_secret = NULL WHERE login = $1 RETURNING id`, [login, hash])
+  if (!updated.length) await run(`INSERT INTO users (login, password_hash, role) VALUES ($1, $2, 'admin')`, [login, hash])
+  await remember()
+  await run(`INSERT INTO audit_log (actor, action, details) VALUES ('system', 'admin.password.reset', $1)`, [login])
 }
 
 export async function query<T extends Row = Row>(text: string, params: unknown[] = []): Promise<T[]> {
