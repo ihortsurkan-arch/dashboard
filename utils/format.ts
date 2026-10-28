@@ -1,11 +1,16 @@
-const intFmt = new Intl.NumberFormat('uk-UA')
+// Number and date formatting. Reads the current locale, so it re-renders on a language switch.
 
 export function fmtInt(v: number | null | undefined) {
-  return v == null ? '—' : intFmt.format(Math.round(v))
+  return v == null ? '—' : new Intl.NumberFormat(intlLocale()).format(Math.round(v))
 }
 
 export function fmtPct(v: number | null | undefined, digits = 2) {
-  return v == null ? '—' : `${(v * 100).toFixed(digits).replace('.', ',')}%`
+  if (v == null) return '—'
+  return `${new Intl.NumberFormat(intlLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(v * 100)}%`
+}
+
+export function fmtDec(v: number, digits = 1) {
+  return new Intl.NumberFormat(intlLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(v)
 }
 
 export function fmtDuration(sec: number | null | undefined) {
@@ -20,22 +25,32 @@ export function change(cur: number | null, prev: number | null): number | null {
   return (cur - prev) / prev
 }
 
-const MONTHS = ['січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд']
+const asDate = (d: string) => new Date(`${d.length === 7 ? `${d}-01` : d}T00:00:00Z`)
 
 export function fmtDay(d: string) {
-  const [, m, day] = d.split('-').map(Number)
-  return `${day} ${MONTHS[m - 1]}`
+  return new Intl.DateTimeFormat(intlLocale(), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(asDate(d)).replace('.', '')
 }
 
 export function fmtMonth(m: string) {
-  const [y, mm] = m.split('-').map(Number)
-  return `${MONTHS[mm - 1]} ${y}`
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(asDate(m)).replace(' р.', '').replace(' г.', '')
+}
+
+export function fmtMonthLong(m: string) {
+  return new Intl.DateTimeFormat(intlLocale(), { month: 'long', timeZone: 'UTC' }).format(asDate(m))
 }
 
 export function fmtRange(from: string, to: string) {
-  const [fy] = from.split('-')
-  const [ty] = to.split('-')
-  return fy === ty ? `${fmtDay(from)} – ${fmtDay(to)} ${ty}` : `${fmtDay(from)} ${fy} – ${fmtDay(to)} ${ty}`
+  const f = new Intl.DateTimeFormat(intlLocale(), { day: 'numeric', month: 'short', year: from.slice(0, 4) === to.slice(0, 4) ? undefined : 'numeric', timeZone: 'UTC' })
+  const tt = new Intl.DateTimeFormat(intlLocale(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+  return `${f.format(asDate(from))} – ${tt.format(asDate(to))}`.replace(/\./g, '').replace(' р', '').replace(' г', '')
+}
+
+export function fmtTime(isoTime: string) {
+  return new Intl.DateTimeFormat(intlLocale(), { hour: '2-digit', minute: '2-digit' }).format(new Date(isoTime))
+}
+
+export function fmtDateTime(isoTime: string) {
+  return new Intl.DateTimeFormat(intlLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(isoTime))
 }
 
 export function cssVar(name: string) {

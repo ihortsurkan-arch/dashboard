@@ -1,22 +1,25 @@
-const DATE = /^\d{4}-\d{2}-\d{2}$/
+import type { Annotation, Goal } from '~~/shared/stats'
 
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
   const q = getQuery(event)
-  const landingId = intParam(q.landing, 'landing')
-  const from = String(q.from ?? '')
-  const to = String(q.to ?? '')
-  if (!DATE.test(from) || !DATE.test(to) || Number.isNaN(Date.parse(from)) || Number.isNaN(Date.parse(to))) {
-    throw createError({ statusCode: 400, statusMessage: 'Некоректні дати' })
-  }
-  if (from > to) throw createError({ statusCode: 400, statusMessage: 'Дата «з» пізніша за «по»' })
-  if (from < '2015-08-14') throw createError({ statusCode: 400, statusMessage: 'Занадто рання дата' })
-  const { days } = periods(from, to)
-  if (days > 731) throw createError({ statusCode: 400, statusMessage: 'Період не довший за 2 роки' })
+  const { from, to } = dateRange(q)
+  const landing = await accessibleLanding(user, q.landing)
+  const filters = cleanFilters(q)
+  const fresh = q.fresh === '1'
 
-  const landing = (await landingsFor(user)).find((l) => l.id === landingId)
-  if (!landing) throw createError({ statusCode: 404, statusMessage: 'Лендинг не знайдено або немає доступу' })
-
+  const [stats, goals, notes] = await Promise.all([
+    getStats(landing, from, to, filters, fresh),
+    query<Goal>('SELECT month, leads FROM goals WHERE landing_id = $1 AND month = $2', [landing.id, new Date().toISOString().slice(0, 7)]),
+    query<{ id: number; date: string; text: string; author: string; user_id: number | null }>(
+      `SELECT id, to_char(date, 'YYYY-MM-DD') AS date, text, author, user_id FROM annotations
+       WHERE landing_id = $1 AND date BETWEEN $2::date AND $3::date ORDER BY date, id`,
+      [landing.id, from, to],
+    ),
+  ])
+  const annotations: Annotation[] = notes.map((n) => ({
+    id: n.id, date: n.date, text: n.text, author: n.author, canDelete: user.role === 'admin' || n.user_id === user.id,
+  }))
   setHeader(event, 'Cache-Control', 'private, no-store')
-  return getStats(landing, from, to)
+  return { ...stats, goal: goals[0] ?? null, annotations }
 })

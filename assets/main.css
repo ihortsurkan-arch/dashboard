@@ -34,7 +34,7 @@
   --axis: #c9ccd3;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
     --page: #111216;
     --surface: #1b1c22;
@@ -61,6 +61,33 @@
     --grid: #26282f;
     --axis: #3b3e48;
   }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #111216;
+  --surface: #1b1c22;
+  --ink: #eceef2;
+  --ink-2: #b4b8c2;
+  --ink-3: #868b95;
+  --hair: #2b2d35;
+  --hair-strong: #3b3e48;
+  --accent: #d896c8;
+  --accent-ink: #1b1c22;
+  --accent-wash: #33222f;
+  --good: #2fbf4a;
+  --bad: #ff7b6e;
+
+  --sessions: #3987e5;
+  --leads: #d95926;
+  --c1: #3987e5;
+  --c2: #d95926;
+  --c3: #199e70;
+  --c4: #c98500;
+  --c5: #d55181;
+  --c6: #9085e9;
+  --c-other: #6b6f79;
+  --grid: #26282f;
+  --axis: #3b3e48;
 }
 
 * { box-sizing: border-box; }
@@ -123,6 +150,15 @@ label.field { display: grid; gap: 5px; font-size: 13px; color: var(--ink-2); }
 @media (prefers-reduced-motion: no-preference) {
   .skeleton { animation: pulse 1.4s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity: .5; } }
+}
+
+/* Print / PDF: the dashboard as a clean report */
+@media print {
+  body { background: #fff; }
+  .no-print, .topbar, .filters .period, .filters .landing select { display: none !important; }
+  .card { break-inside: avoid; border-color: #ddd; }
+  .container { max-width: none; padding: 0; }
+  * { animation: none !important; transition: none !important; }
 }
 
 /* ---- Motion ----

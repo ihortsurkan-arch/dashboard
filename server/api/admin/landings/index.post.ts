@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const admin = await requireAdmin(event)
   const body = await readBody(event)
   const hostname = cleanHostname(body?.hostname)
   const name = String(body?.name ?? '').trim() || hostname
@@ -9,5 +9,6 @@ export default defineEventHandler(async (event) => {
     'INSERT INTO landings (name, hostname) VALUES ($1, $2) RETURNING id',
     [name.slice(0, 120), hostname],
   )
+  await audit(admin.login, 'landing.create', `${name} (${hostname})`)
   return { id: row.id }
 })

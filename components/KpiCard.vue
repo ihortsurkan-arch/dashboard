@@ -68,7 +68,7 @@ const options = computed(() => ({
 <template>
   <div class="metric" :style="{ '--d': `${delay}ms` }">
     <div class="title"><component :is="icon" v-if="icon" :size="15" :stroke-width="1.9" class="ico" :style="{ color: `var(${colorVar ?? '--sessions'})` }" />{{ title }}</div>
-    <div class="value" :class="{ none: value == null }">{{ value == null ? 'Немає даних' : fmt(counted ?? value) }}</div>
+    <div class="value" :class="{ none: value == null }">{{ value == null ? t('Немає даних') : fmt(counted ?? value) }}</div>
     <div class="delta">
       <span v-if="delta != null" class="chg" :class="good === true ? 'up' : good === false ? 'down' : ''">
         <ArrowUpRight v-if="delta > 0" :size="14" :stroke-width="2.25" aria-hidden="true" />
@@ -76,11 +76,11 @@ const options = computed(() => ({
         <Minus v-else :size="14" :stroke-width="2.25" aria-hidden="true" />
         {{ delta > 0 ? '+' : delta < 0 ? '−' : '' }}{{ fmtPct(Math.abs(delta), 1) }}
       </span>
-      <span class="prev">було {{ fmt(prev) }}</span>
+      <span class="prev">{{ t('було {v}', { v: fmt(prev) }) }}</span>
     </div>
     <div class="spark">
-      <Line v-if="hasSpark" :data="chartData" :options="options" :aria-label="`${title} по днях`" role="img" />
-      <div v-else class="spark-empty">{{ hint ?? 'Немає даних за період' }}</div>
+      <Line v-if="hasSpark" :data="chartData" :options="options" :aria-label="t('{m} по днях', { m: title })" role="img" />
+      <div v-else class="spark-empty">{{ hint ?? t('Немає даних за період') }}</div>
     </div>
   </div>
 </template>

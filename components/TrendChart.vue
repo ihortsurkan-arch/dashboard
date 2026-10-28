@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Line } from 'vue-chartjs'
+import type { Annotation } from '~~/shared/stats'
 
 // Current period as the accented line, the previous period of equal length as a quiet grey line
 // under it, aligned day 1 to day 1. One axis, one unit; the hover rule shows both dates.
@@ -10,6 +11,8 @@ const props = defineProps<{
   prevValues: number[]
   seriesName: string
   colorVar?: string
+  /** Event markers drawn as thin accent lines with a dot at the top. */
+  annotations?: Annotation[]
 }>()
 const tick = useThemeTick()
 
@@ -37,6 +40,33 @@ const hoverRule = {
   },
 }
 
+// Accent line + dot for each annotated day
+const markers = {
+  id: 'markers',
+  afterDatasetsDraw(chart: any) {
+    const notes = props.annotations ?? []
+    if (!notes.length) return
+    const { top, bottom } = chart.chartArea
+    const x = chart.scales.x
+    const ctx = chart.ctx
+    const color = cssVar('--accent')
+    ctx.save()
+    for (const d of new Set(notes.map((n) => n.date))) {
+      const i = props.dates.indexOf(d)
+      if (i < 0) continue
+      const px = x.getPixelForValue(i)
+      ctx.strokeStyle = color
+      ctx.globalAlpha = 0.55
+      ctx.lineWidth = 1.5
+      ctx.beginPath(); ctx.moveTo(px, top + 6); ctx.lineTo(px, bottom); ctx.stroke()
+      ctx.globalAlpha = 1
+      ctx.fillStyle = color
+      ctx.beginPath(); ctx.arc(px, top + 4, 4, 0, Math.PI * 2); ctx.fill()
+    }
+    ctx.restore()
+  },
+}
+
 const data = computed(() => {
   void tick.value
   const color = cssVar(props.colorVar ?? '--sessions')
@@ -47,7 +77,7 @@ const data = computed(() => {
     labels: props.dates.map(fmtDay),
     datasets: [
       {
-        label: 'Цей період',
+        label: t('Цей період'),
         data: props.values,
         borderColor: color,
         backgroundColor: color + '1a',
@@ -60,7 +90,7 @@ const data = computed(() => {
         ...point,
       },
       {
-        label: 'Попередній період',
+        label: t('Попередній період'),
         data: props.prevValues.slice(0, props.values.length),
         borderColor: ghost,
         pointHoverBackgroundColor: ghost,
@@ -89,9 +119,13 @@ const options = computed(() => {
           title: (items: any[]) => {
             const i = items[0]?.dataIndex ?? 0
             const prev = props.prevDates[i]
-            return prev ? `${fmtDay(props.dates[i])}, було ${fmtDay(prev)}` : fmtDay(props.dates[i])
+            return prev ? t('{d}, було {p}', { d: fmtDay(props.dates[i]), p: fmtDay(prev) }) : fmtDay(props.dates[i])
           },
           label: (c: any) => ` ${c.dataset.label}: ${fmtInt(c.raw)}`,
+          afterBody: (items: any[]) => {
+            const d = props.dates[items[0]?.dataIndex ?? -1]
+            return (props.annotations ?? []).filter((n) => n.date === d).map((n) => `◆ ${n.text}`)
+          },
         },
       },
     },
@@ -106,15 +140,15 @@ const delta = computed(() => change(total.value, prevTotal.value))
 </script>
 
 <template>
-  <div v-if="empty" class="empty">Немає даних за обраний період</div>
+  <div v-if="empty" class="empty">{{ t('Немає даних за обраний період') }}</div>
   <div v-else>
     <div class="legend">
-      <span class="item"><span class="line" :style="{ background: `var(${colorVar ?? '--sessions'})` }" />Цей період <b class="num">{{ fmtInt(total) }}</b></span>
-      <span class="item"><span class="line ghost" />Попередній <b class="num">{{ fmtInt(prevTotal) }}</b></span>
+      <span class="item"><span class="line" :style="{ background: `var(${colorVar ?? '--sessions'})` }" />{{ t('Цей період') }} <b class="num">{{ fmtInt(total) }}</b></span>
+      <span class="item"><span class="line ghost" />{{ t('Попередній') }} <b class="num">{{ fmtInt(prevTotal) }}</b></span>
       <span v-if="delta != null" class="d" :class="delta >= 0 ? 'up' : 'down'">{{ delta > 0 ? '+' : delta < 0 ? '−' : '' }}{{ fmtPct(Math.abs(delta), 1) }}</span>
     </div>
     <div class="plot">
-      <Line :data="data" :options="options" :plugins="[hoverRule]" role="img" :aria-label="`${seriesName} по днях проти попереднього періоду`" />
+      <Line :data="data" :options="options" :plugins="[hoverRule, markers]" role="img" :aria-label="t('{m} по днях проти попереднього періоду', { m: seriesName })" />
     </div>
   </div>
 </template>

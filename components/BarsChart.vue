@@ -9,7 +9,11 @@ const props = defineProps<{
   horizontal?: boolean
   seriesName: string
   colorVar?: string
+  /** When set, bars are clickable and emit their label (cross-filter). */
+  pickable?: boolean
+  active?: string | null
 }>()
+const emit = defineEmits<{ pick: [label: string] }>()
 const tick = useThemeTick()
 
 const empty = computed(() => !props.values.some((v) => v > 0))
@@ -40,8 +44,12 @@ const data = computed(() => {
     datasets: [{
       label: props.seriesName,
       data: props.values,
-      backgroundColor: cssVar(props.colorVar ?? '--sessions'),
-      borderRadius: { topLeft: props.horizontal ? 0 : 4, topRight: 4, bottomRight: props.horizontal ? 4 : 0, bottomLeft: 0 },
+      // Scriptable (not an array) so Chart.js can tween colours when the active bar changes
+      backgroundColor: (ctx: any) => {
+        const c = cssVar(props.colorVar ?? '--sessions')
+        return props.active && props.active !== props.labels[ctx.dataIndex] ? c + '55' : c
+      },
+      borderRadius: 4, // with borderSkipped 'start' only the value end is rounded
       borderSkipped: 'start' as const,
       maxBarThickness: props.horizontal ? 18 : 22,
       categoryPercentage: 0.8,
@@ -73,11 +81,18 @@ const options = computed(() => {
     responsive: true,
     maintainAspectRatio: false,
     layout: { padding: { right: props.horizontal ? 8 : 0 } },
+    onClick: (_e: any, els: any[]) => { if (props.pickable && els.length) emit('pick', props.labels[els[0].index]) },
+    onHover: (e: any, els: any[]) => { if (props.pickable && e.native?.target) e.native.target.style.cursor = els.length ? 'pointer' : 'default' },
     plugins: {
       legend: { display: false },
       tooltip: {
         displayColors: false,
-        callbacks: { label: (c: any) => `${props.seriesName}: ${fmtInt(c.raw)}` },
+        callbacks: {
+          label: (c: any) => `${props.seriesName}: ${fmtInt(c.raw)}`,
+          footer: () => (props.pickable ? t('Клікніть, щоб відфільтрувати') : ''),
+        },
+        footerColor: cssVar('--ink-3'),
+        footerFont: { weight: 'normal' as const, size: 11 },
       },
     },
     interaction: { mode: 'index' as const, intersect: false, axis: props.horizontal ? ('y' as const) : ('x' as const) },
@@ -87,7 +102,7 @@ const options = computed(() => {
 </script>
 
 <template>
-  <div v-if="empty" class="empty">Немає даних за обраний період</div>
+  <div v-if="empty" class="empty">{{ t('Немає даних за обраний період') }}</div>
   <div v-else :style="{ height: height + 'px' }">
     <Bar :data="data" :options="options" :plugins="[endLabels]" role="img" :aria-label="seriesName" />
   </div>

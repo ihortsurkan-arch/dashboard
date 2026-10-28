@@ -1,4 +1,4 @@
-// Shape of /api/stats answers, shared by server and client.
+// Shapes of the API answers, shared by server and client.
 
 export interface Kpi {
   value: number | null
@@ -43,12 +43,39 @@ export interface TableResult<T> {
   total: { sessions: number; events: number }
 }
 
+export interface SessionsLeads {
+  label: string
+  sessions: number
+  leads: number
+}
+
+/** Filters that narrow every number on the dashboard (exact match on a GA4 dimension). */
+export const FILTER_KEYS = ['channel', 'device', 'source', 'medium', 'campaign', 'content', 'term', 'country'] as const
+export type FilterKey = typeof FILTER_KEYS[number]
+export type Filters = Partial<Record<FilterKey, string>>
+
+export interface Annotation {
+  id: number
+  date: string
+  text: string
+  author: string
+  canDelete: boolean
+}
+
+export interface Goal {
+  month: string // YYYY-MM
+  leads: number
+}
+
 export interface Stats {
   landing: { id: number; name: string; hostname: string }
   range: { from: string; to: string }
   prev: { from: string; to: string }
+  filters: Filters
   leadEvent: string
   mock: boolean
+  /** ISO time the numbers were read from GA4 (cache time). */
+  fetchedAt: string
   kpis: {
     sessions: Kpi
     leads: Kpi
@@ -68,7 +95,39 @@ export interface Stats {
   leadsByDevice: LabelValue[]
   leadsByChannel: LabelValue[]
   leadsBySource: LabelValue[]
+  countries: SessionsLeads[]
+  cities: SessionsLeads[]
+  landingPages: SessionsLeads[]
+  /** Today vs the same weekday a week ago (GA4 processing lag applies). */
+  today: { sessions: Kpi; leads: Kpi }
+  /** Leads in the current calendar month for the plan card; ignores filters. */
+  monthToDate: { month: string; leads: number; daysElapsed: number; daysInMonth: number }
+  goal: Goal | null
+  annotations: Annotation[]
   referrers: TableResult<{ referrer: string; sessions: number; events: number }>
   sources: TableResult<{ source: string; sessions: number; events: number }>
   sourceCampaign: TableResult<{ source: string; campaign: string; sessions: number; events: number }>
+}
+
+export interface FilterOptions {
+  [key: string]: { value: string; sessions: number }[]
+}
+
+export interface OverviewRow {
+  id: number
+  name: string
+  hostname: string
+  sessions: Kpi
+  leads: Kpi
+  leadSessions: Kpi
+  spark: number[]
+  sparkLeads: number[]
+}
+
+export interface Overview {
+  range: { from: string; to: string }
+  prev: { from: string; to: string }
+  mock: boolean
+  fetchedAt: string
+  rows: OverviewRow[]
 }

@@ -34,5 +34,12 @@ export default defineNuxtConfig({
       // "1" → generated demo numbers instead of GA4 (for local development).
       mock: '',
     },
+    // Telegram alerts: bot token from @BotFather and the chat (or group) id to post into.
+    telegram: {
+      botToken: '',
+      chatId: '',
+    },
+    // Base URL used in alert messages, e.g. https://dashboard-xi-ten-54.vercel.app
+    publicUrl: '',
   },
 })

@@ -18,29 +18,29 @@ const counted = useCountUp(() => (cur.value == null ? null : cur.value * 100), {
 <template>
   <div class="funnel">
     <div class="hero">
-      <div class="rate">{{ cur == null ? '—' : `${(counted ?? 0).toFixed(1).replace('.', ',')}%` }}</div>
+      <div class="rate">{{ cur == null ? '—' : `${fmtDec(counted ?? 0)}%` }}</div>
       <div class="caption">
-        сесій закінчились лідом
-        <span v-if="pp != null" class="pp" :class="pp >= 0 ? 'up' : 'down'">{{ pp > 0 ? '+' : pp < 0 ? '−' : '' }}{{ Math.abs(pp).toFixed(1).replace('.', ',') }} п.п.</span>
+        {{ t('сесій закінчились лідом') }}
+        <span v-if="pp != null" class="pp" :class="pp >= 0 ? 'up' : 'down'">{{ pp > 0 ? '+' : pp < 0 ? '−' : '' }}{{ fmtDec(Math.abs(pp)) }} {{ t('п.п.') }}</span>
       </div>
     </div>
 
     <div class="steps">
       <div class="step">
-        <div class="row"><span>Сесії</span><b class="num">{{ fmtInt(sessions.value) }}</b></div>
+        <div class="row"><span>{{ t('Сесії') }}</span><b class="num">{{ fmtInt(sessions.value) }}</b></div>
         <div class="track"><div class="bar s" :style="{ width: w(sessions.value) }" /></div>
         <div class="track thin"><div class="bar ghost" :style="{ width: w(sessions.prev) }" /></div>
       </div>
       <div class="step">
-        <div class="row"><span>Сесії з лідом</span><b class="num">{{ fmtInt(leadSessions.value) }}</b></div>
+        <div class="row"><span>{{ t('Сесії з лідом') }}</span><b class="num">{{ fmtInt(leadSessions.value) }}</b></div>
         <div class="track"><div class="bar l" :style="{ width: w(leadSessions.value) }" /></div>
         <div class="track thin"><div class="bar ghost" :style="{ width: w(leadSessions.prev) }" /></div>
       </div>
     </div>
 
     <p class="foot">
-      <span class="key"><span class="sw ghost" />попередній період</span>
-      <span>Подій ліда: <b class="num">{{ fmtInt(leads.value) }}</b><template v-if="leadSessions.value">, у середньому {{ (leads.value! / leadSessions.value).toFixed(2).replace('.', ',') }} на сесію</template></span>
+      <span class="key"><span class="sw ghost" />{{ t('попередній період') }}</span>
+      <span>{{ t('Подій ліда:') }} <b class="num">{{ fmtInt(leads.value) }}</b><template v-if="leadSessions.value">{{ t(', у середньому {v} на сесію', { v: fmtDec(leads.value! / leadSessions.value, 2) }) }}</template></span>
     </p>
   </div>
 </template>

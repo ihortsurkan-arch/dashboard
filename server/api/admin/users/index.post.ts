@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  const admin = await requireAdmin(event)
   const body = await readBody(event)
   const login = cleanLogin(body?.login)
   const password = cleanPassword(body?.password)
@@ -11,5 +11,6 @@ export default defineEventHandler(async (event) => {
     [login, await hashPassword(password), role],
   )
   await setUserLandings(user.id, cleanIds(body?.landingIds))
+  await audit(admin.login, 'user.create', `${login} (${role})`)
   return { id: user.id }
 })

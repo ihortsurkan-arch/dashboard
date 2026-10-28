@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const admin = await requireAdmin(event)
   const id = intParam(getRouterParam(event, 'id'))
   const body = await readBody(event)
-  const [user] = await query<{ id: number; role: string }>('SELECT id, role FROM users WHERE id = $1', [id])
+  const [user] = await query<{ id: number; role: string; login: string }>('SELECT id, role, login FROM users WHERE id = $1', [id])
   if (!user) throw createError({ statusCode: 404, statusMessage: 'Користувача не знайдено' })
 
   if (body?.role !== undefined) {
@@ -17,5 +17,8 @@ export default defineEventHandler(async (event) => {
     await query('UPDATE users SET password_hash = $2 WHERE id = $1', [id, await hashPassword(cleanPassword(body.password))])
   }
   if (body?.landingIds !== undefined) await setUserLandings(id, cleanIds(body.landingIds))
+  if (body?.reset2fa === true) await query('UPDATE users SET totp_enabled = FALSE, totp_secret = NULL WHERE id = $1', [id])
+  const changed = [body?.role !== undefined && `role=${cleanRole(body.role)}`, body?.password && 'password', body?.reset2fa === true && '2fa reset', body?.landingIds !== undefined && `landings=${cleanIds(body.landingIds).join(',') || '—'}`].filter(Boolean).join(', ')
+  await audit(admin.login, 'user.update', `${user.login}: ${changed}`)
   return { ok: true }
 })

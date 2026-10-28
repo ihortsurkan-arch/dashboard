@@ -5,8 +5,8 @@ import type { HeatCell } from '~~/shared/stats'
 // light = few, dark = many. Hover or focus a cell for its exact number.
 const props = defineProps<{ cells: HeatCell[] }>()
 
-const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
-const DAYS_FULL = ['понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота', 'неділя']
+const DAYS = computed(() => ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d) => t(d)))
+const DAYS_FULL = computed(() => ['понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота', 'неділя'].map((d) => t(d)))
 const metric = ref<'sessions' | 'leads'>('sessions')
 const colorVar = computed(() => (metric.value === 'sessions' ? '--sessions' : '--leads'))
 
@@ -20,7 +20,7 @@ function bg(v: number) {
   return `color-mix(in oklab, var(${colorVar.value}) ${share}%, var(--surface))`
 }
 const hourLabel = (h: number) => `${String(h).padStart(2, '0')}:00`
-const unit = computed(() => (metric.value === 'sessions' ? 'сес.' : 'лід.'))
+const unit = computed(() => (metric.value === 'sessions' ? t('сес.') : t('лід.')))
 
 const hover = ref<HeatCell | null>(null)
 const tipStyle = ref<Record<string, string>>({})
@@ -38,16 +38,16 @@ function show(c: HeatCell, e: Event) {
 <template>
   <div class="heat">
     <div class="top">
-      <div class="seg" role="group" aria-label="Показник">
-        <button :aria-pressed="metric === 'sessions'" @click="metric = 'sessions'"><span class="sw" style="background: var(--sessions)" />Сесії</button>
-        <button :aria-pressed="metric === 'leads'" @click="metric = 'leads'"><span class="sw" style="background: var(--leads)" />Ліди</button>
+      <div class="seg" role="group" :aria-label="t('Показник')">
+        <button :aria-pressed="metric === 'sessions'" @click="metric = 'sessions'"><span class="sw" style="background: var(--sessions)" />{{ t('Сесії') }}</button>
+        <button :aria-pressed="metric === 'leads'" @click="metric = 'leads'"><span class="sw" style="background: var(--leads)" />{{ t('Ліди') }}</button>
       </div>
-      <p v-if="total" class="peak">Пік: <b>{{ DAYS_FULL[peak.dow] }}, {{ hourLabel(peak.hour) }}</b> ({{ fmtInt(peak[metric]) }} {{ unit }})</p>
+      <p v-if="total" class="peak">{{ t('Пік:') }} <b>{{ DAYS_FULL[peak.dow] }}, {{ hourLabel(peak.hour) }}</b> ({{ fmtInt(peak[metric]) }} {{ unit }})</p>
     </div>
 
-    <div v-if="!total" class="empty">Немає даних за обраний період</div>
+    <div v-if="!total" class="empty">{{ t('Немає даних за обраний період') }}</div>
     <div v-else ref="wrap" class="grid-wrap" @mouseleave="hover = null">
-      <div class="grid" role="grid" :aria-label="`${metric === 'sessions' ? 'Сесії' : 'Ліди'} за днем тижня і годиною`">
+      <div class="grid" role="grid" :aria-label="t('{m} за днем тижня і годиною', { m: metric === 'sessions' ? t('Сесії') : t('Ліди') })">
         <template v-for="d in 7" :key="d">
           <span class="day" role="rowheader">{{ DAYS[d - 1] }}</span>
           <button
@@ -64,15 +64,15 @@ function show(c: HeatCell, e: Event) {
       </div>
       <div v-if="hover" class="tip" :style="tipStyle" role="status">
         <span class="t">{{ DAYS_FULL[hover.dow] }}, {{ hourLabel(hover.hour) }}–{{ hourLabel((hover.hour + 1) % 24) }}</span>
-        <span><b class="num">{{ fmtInt(hover.sessions) }}</b> сесій, <b class="num">{{ fmtInt(hover.leads) }}</b> лідів</span>
+        <span><b class="num">{{ fmtInt(hover.sessions) }}</b> {{ t('сесій') }}, <b class="num">{{ fmtInt(hover.leads) }}</b> {{ t('лідів') }}</span>
       </div>
     </div>
 
     <div v-if="total" class="scale">
-      <span>менше</span>
+      <span>{{ t('менше') }}</span>
       <span class="ramp" :style="{ background: `linear-gradient(90deg, color-mix(in oklab, var(${colorVar}) 12%, var(--surface)), var(${colorVar}))` }" />
-      <span>більше</span>
-      <span class="tz">Час у часовому поясі ресурсу GA4</span>
+      <span>{{ t('більше') }}</span>
+      <span class="tz">{{ t('Час у часовому поясі ресурсу GA4') }}</span>
     </div>
   </div>
 </template>

@@ -1,21 +1,32 @@
 <script setup lang="ts">
-import { Eye, EyeOff, LogIn, LoaderCircle } from 'lucide-vue-next'
+import { Eye, EyeOff, LoaderCircle, LogIn, ShieldCheck } from 'lucide-vue-next'
 const { fetch } = useUserSession()
 const login = ref('')
 const password = ref('')
+const code = ref('')
+const needCode = ref(false)
 const error = ref('')
 const busy = ref(false)
 const show = ref(false)
+const codeInput = ref<HTMLInputElement | null>(null)
 
 async function submit() {
   error.value = ''
   busy.value = true
   try {
-    await $fetch('/api/auth/login', { method: 'POST', body: { login: login.value, password: password.value } })
+    await $fetch('/api/auth/login', { method: 'POST', body: { login: login.value, password: password.value, ...(needCode.value ? { code: code.value } : {}) } })
     await fetch()
     await navigateTo('/')
   } catch (e: any) {
-    error.value = e?.data?.statusMessage || 'Не вдалося увійти'
+    if (e?.data?.data?.totp) {
+      // Password accepted: ask for the authenticator code
+      if (needCode.value) error.value = e?.data?.statusMessage || t('Невірний код')
+      needCode.value = true
+      code.value = ''
+      nextTick(() => codeInput.value?.focus())
+    } else {
+      error.value = e?.data?.statusMessage || t('Не вдалося увійти')
+    }
   } finally {
     busy.value = false
   }
@@ -28,25 +39,36 @@ async function submit() {
       <div class="head">
         <AppLogo :size="44" class="mark" />
         <h1>Landing Stats</h1>
-        <p class="muted">Статистика трафіку лендингів</p>
+        <p class="muted">{{ t('Статистика трафіку лендингів') }}</p>
       </div>
       <div class="form" @keydown.enter.prevent="submit">
-        <label class="field">Логін
-          <input v-model="login" class="input" autocomplete="username" autofocus>
-        </label>
-        <label class="field">Пароль
-          <span class="pw">
-            <input v-model="password" class="input" :type="show ? 'text' : 'password'" autocomplete="current-password">
-            <button type="button" class="eye" :aria-label="show ? 'Сховати пароль' : 'Показати пароль'" @click="show = !show">
-              <EyeOff v-if="show" :size="17" :stroke-width="1.75" /><Eye v-else :size="17" :stroke-width="1.75" />
-            </button>
-          </span>
-        </label>
+        <template v-if="!needCode">
+          <label class="field">{{ t('Логін') }}
+            <input v-model="login" class="input" autocomplete="username" autofocus>
+          </label>
+          <label class="field">{{ t('Пароль') }}
+            <span class="pw">
+              <input v-model="password" class="input" :type="show ? 'text' : 'password'" autocomplete="current-password">
+              <button type="button" class="eye" :aria-label="show ? t('Сховати пароль') : t('Показати пароль')" @click="show = !show">
+                <EyeOff v-if="show" :size="17" :stroke-width="1.75" /><Eye v-else :size="17" :stroke-width="1.75" />
+              </button>
+            </span>
+          </label>
+        </template>
+        <template v-else>
+          <p class="tf"><ShieldCheck :size="18" />{{ t('Введіть 6-значний код з додатка-автентифікатора') }}</p>
+          <input ref="codeInput" v-model="code" class="input code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" :aria-label="t('Код')">
+        </template>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
-        <button class="btn primary full" :disabled="busy || !login || !password" @click="submit">
+        <button class="btn primary full" :disabled="busy || !login || !password || (needCode && code.length !== 6)" @click="submit">
           <LoaderCircle v-if="busy" :size="17" class="spin" /><LogIn v-else :size="17" :stroke-width="1.9" />
-          {{ busy ? 'Вхід…' : 'Увійти' }}
+          {{ busy ? t('Вхід…') : t('Увійти') }}
         </button>
+        <button v-if="needCode" class="back" @click="needCode = false; error = ''">{{ t('Інший акаунт') }}</button>
+      </div>
+      <div class="prefs">
+        <button :aria-pressed="locale === 'uk'" @click="setLocale('uk')">UA</button>
+        <button :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
       </div>
     </div>
   </div>
@@ -70,6 +92,13 @@ async function submit() {
 .eye:hover { color: var(--ink); }
 .eye:focus-visible { outline: 2px solid var(--accent); }
 .form .input { width: 100%; }
+.tf { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 14px; color: var(--ink-2); }
+.tf svg { color: var(--accent); flex: none; }
+.code { font-size: 22px; letter-spacing: .35em; text-align: center; font-variant-numeric: tabular-nums; }
+.back { all: unset; cursor: pointer; justify-self: center; font-size: 13px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.prefs { display: flex; justify-content: center; gap: 4px; margin-top: 18px; }
+.prefs button { all: unset; cursor: pointer; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 6px; color: var(--ink-3); }
+.prefs button[aria-pressed='true'] { background: var(--grid); color: var(--ink); }
 @media (prefers-reduced-motion: no-preference) { .spin { animation: spin .8s linear infinite; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>

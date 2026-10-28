@@ -24,6 +24,31 @@ CREATE TABLE IF NOT EXISTS user_landings (
   landing_id INTEGER NOT NULL REFERENCES landings(id) ON DELETE CASCADE,
   PRIMARY KEY (user_id, landing_id)
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+CREATE TABLE IF NOT EXISTS goals (
+  landing_id INTEGER NOT NULL REFERENCES landings(id) ON DELETE CASCADE,
+  month TEXT NOT NULL,
+  leads INTEGER NOT NULL CHECK (leads > 0),
+  PRIMARY KEY (landing_id, month)
+);
+CREATE TABLE IF NOT EXISTS annotations (
+  id SERIAL PRIMARY KEY,
+  landing_id INTEGER NOT NULL REFERENCES landings(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  text TEXT NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  author TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS annotations_landing_date ON annotations (landing_id, date);
+CREATE TABLE IF NOT EXISTS audit_log (
+  id SERIAL PRIMARY KEY,
+  at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  actor TEXT NOT NULL,
+  action TEXT NOT NULL,
+  details TEXT NOT NULL DEFAULT ''
+);
 `
 
 async function createRunner(): Promise<Runner> {

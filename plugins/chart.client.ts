@@ -20,4 +20,7 @@ export default defineNuxtPlugin(() => {
     delay: (ctx: any) => (ctx.type === 'data' && ctx.mode === 'default' ? 350 + Math.min(ctx.dataIndex, 40) * 14 : 0),
   } as any
   Chart.defaults.transitions.active = { animation: { duration: 150 } } as any
+  // Only geometry tweens; colours switch instantly (a colour that appears on update has no
+  // "from" value, which makes Chart.js' colour interpolator throw).
+  ;(Chart.defaults as any).animations.colors = false
 })
