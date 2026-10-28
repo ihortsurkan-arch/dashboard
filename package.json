@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@google-analytics/data": "^7.3.0",
+    "@simplewebauthn/browser": "^11.0.0",
+    "@simplewebauthn/server": "^11.0.0",
     "chart.js": "^4.6.1",
     "lucide-vue-next": "^1.0.0",
     "nuxt": "^3.21.0",

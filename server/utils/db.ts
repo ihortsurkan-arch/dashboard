@@ -42,6 +42,22 @@ CREATE TABLE IF NOT EXISTS annotations (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS annotations_landing_date ON annotations (landing_id, date);
+CREATE TABLE IF NOT EXISTS passkeys (
+  id TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  public_key TEXT NOT NULL,
+  counter BIGINT NOT NULL DEFAULT 0,
+  backed_up BOOLEAN NOT NULL DEFAULT FALSE,
+  transports TEXT NOT NULL DEFAULT '[]',
+  name TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_used_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS webauthn_challenges (
+  attempt_id TEXT PRIMARY KEY,
+  challenge TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   id SERIAL PRIMARY KEY,
   at TIMESTAMPTZ NOT NULL DEFAULT now(),

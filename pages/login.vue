@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Eye, EyeOff, LoaderCircle, LogIn, ShieldCheck } from 'lucide-vue-next'
+import { Eye, EyeOff, LoaderCircle, LogIn, ScanFace, ShieldCheck } from 'lucide-vue-next'
 const { fetch } = useUserSession()
 const login = ref('')
 const password = ref('')
@@ -9,6 +9,23 @@ const error = ref('')
 const busy = ref(false)
 const show = ref(false)
 const codeInput = ref<HTMLInputElement | null>(null)
+
+// Passkey sign-in: Face ID / Touch ID, no login or password
+const { authenticate, isSupported } = useWebAuthn({ authenticateEndpoint: '/api/webauthn/authenticate' })
+const pkBusy = ref(false)
+async function signInWithPasskey() {
+  error.value = ''
+  pkBusy.value = true
+  try {
+    await authenticate()
+    await fetch()
+    await navigateTo('/')
+  } catch (e: any) {
+    if (e?.name !== 'NotAllowedError' && e?.name !== 'AbortError') {
+      error.value = e?.data?.statusMessage || t('Не вдалося увійти з Face ID. Спробуйте пароль.')
+    }
+  } finally { pkBusy.value = false }
+}
 
 async function submit() {
   error.value = ''
@@ -65,6 +82,13 @@ async function submit() {
           {{ busy ? t('Вхід…') : t('Увійти') }}
         </button>
         <button v-if="needCode" class="back" @click="needCode = false; error = ''">{{ t('Інший акаунт') }}</button>
+        <template v-if="isSupported && !needCode">
+          <div class="or"><span>{{ t('або') }}</span></div>
+          <button class="btn full passkey" :disabled="pkBusy" @click="signInWithPasskey">
+            <LoaderCircle v-if="pkBusy" :size="18" class="spin" /><ScanFace v-else :size="18" :stroke-width="1.9" />
+            {{ t('Увійти з Face ID / Touch ID') }}
+          </button>
+        </template>
       </div>
       <div class="prefs">
         <button :aria-pressed="locale === 'uk'" @click="setLocale('uk')">UA</button>
@@ -96,6 +120,9 @@ async function submit() {
 .tf svg { color: var(--accent); flex: none; }
 .code { font-size: 22px; letter-spacing: .35em; text-align: center; font-variant-numeric: tabular-nums; }
 .back { all: unset; cursor: pointer; justify-self: center; font-size: 13px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.or { display: flex; align-items: center; gap: 10px; color: var(--ink-3); font-size: 12.5px; }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--hair); }
+.passkey { font-weight: 600; }
 .prefs { display: flex; justify-content: center; gap: 4px; margin-top: 18px; }
 .prefs button { all: unset; cursor: pointer; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 6px; color: var(--ink-3); }
 .prefs button[aria-pressed='true'] { background: var(--grid); color: var(--ink); }

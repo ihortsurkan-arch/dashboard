@@ -144,7 +144,7 @@ const ACTIONS: Record<string, string> = {
   'user.delete': 'Видалено користувача', 'landing.create': 'Додано лендинг', 'landing.update': 'Змінено лендинг',
   'landing.delete': 'Видалено лендинг', 'goal.set': 'Задано план', 'goal.remove': 'Прибрано план',
   'account.password': 'Змінено свій пароль', 'account.2fa.enable': 'Увімкнено 2FA', 'account.2fa.disable': 'Вимкнено 2FA',
-  'telegram.test': 'Тест Telegram', 'telegram.run': 'Ручна перевірка сповіщень',
+  'telegram.test': 'Тест Telegram', 'login.passkey': 'Вхід з Face ID', 'passkey.add': 'Додано ключ доступу', 'passkey.remove': 'Прибрано ключ доступу', 'telegram.run': 'Ручна перевірка сповіщень',
 }
 watch(tab, (v) => {
   if (v === 'alerts') refreshTg()

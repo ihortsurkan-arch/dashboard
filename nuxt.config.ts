@@ -4,6 +4,8 @@ export default defineNuxtConfig({
   // Private dashboard behind a login: a client-rendered app, the server only serves the API.
   ssr: false,
   modules: ['nuxt-auth-utils'],
+  // Passkeys (Face ID / Touch ID / Windows Hello) via nuxt-auth-utils
+  auth: { webAuthn: true },
   css: ['~/assets/main.css'],
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
