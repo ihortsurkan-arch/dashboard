@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CornerUpLeft, Hourglass, Inbox, Link2, MousePointerClick, Target, Timer } from 'lucide-vue-next'
+import { CalendarClock, CornerUpLeft, Filter, Hourglass, Inbox, Link2, MousePointerClick, Target, Timer } from 'lucide-vue-next'
 import type { Stats } from '~~/shared/stats'
 
 interface Landing { id: number; name: string; hostname: string }
@@ -156,6 +156,25 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
                    format="pct" good-when="down" :spark="s.daily.map((d) => d.bounceRate)" :spark-labels="dayLabels" color-var="--sessions" />
         </section>
 
+        <section id="conversion" class="section">
+          <div class="section-head">
+            <h2><span class="key leads" aria-hidden="true"><Filter :size="16" :stroke-width="2" /></span>Конверсія</h2>
+            <p class="muted">Скільки сесій закінчуються лідом і які джерела конвертують краще</p>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h3>Сесії → ліди</h3>
+              <p class="note">Частка сесій, у яких була подія ліда</p>
+              <ConversionFunnel :sessions="s.kpis.sessions" :lead-sessions="s.leadSessions" :leads="s.kpis.leads" />
+            </div>
+            <div class="card">
+              <h3>Джерела лідів</h3>
+              <p class="note">Ліди за джерелом сесії і скільки лідів припадає на сесію</p>
+              <SourceRank :leads-by-source="s.leadsBySource" :sources="s.sources.rows" />
+            </div>
+          </div>
+        </section>
+
         <section id="leads" class="section">
           <div class="section-head">
             <h2><span class="key leads" aria-hidden="true"><Target :size="16" :stroke-width="2" /></span>Ліди</h2>
@@ -181,8 +200,10 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
           <div class="grid-2">
             <div class="card">
               <h3>Leads Daily</h3>
-              <p class="note">Ліди по днях</p>
-              <BarsChart :labels="dayLabels" :values="s.daily.map((d) => d.leads)" series-name="Leads" color-var="--leads" />
+              <p class="note">Ліди по днях проти попереднього періоду</p>
+              <TrendChart :dates="s.daily.map((d) => d.date)" :values="s.daily.map((d) => d.leads)"
+                          :prev-dates="s.dailyPrev.map((d) => d.date)" :prev-values="s.dailyPrev.map((d) => d.leads)"
+                          series-name="Leads" color-var="--leads" />
             </div>
             <div class="card">
               <h3>Leads Monthly</h3>
@@ -209,14 +230,26 @@ const lv = (rows?: { label: string; value: number }[]) => ({ labels: rows?.map((
             </div>
             <div class="card">
               <h3>Sessions Daily</h3>
-              <p class="note">Сесії по днях</p>
-              <BarsChart :labels="dayLabels" :values="s.daily.map((d) => d.sessions)" series-name="Sessions" color-var="--sessions" />
+              <p class="note">Сесії по днях проти попереднього періоду</p>
+              <TrendChart :dates="s.daily.map((d) => d.date)" :values="s.daily.map((d) => d.sessions)"
+                          :prev-dates="s.dailyPrev.map((d) => d.date)" :prev-values="s.dailyPrev.map((d) => d.sessions)"
+                          series-name="Sessions" color-var="--sessions" />
             </div>
             <div class="card">
               <h3>Sessions Monthly</h3>
               <p class="note">Сесії по місяцях у межах періоду</p>
               <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.sessions)" series-name="Sessions" color-var="--sessions" />
             </div>
+          </div>
+        </section>
+
+        <section id="when" class="section">
+          <div class="section-head">
+            <h2><span class="key neutral" aria-hidden="true"><CalendarClock :size="16" :stroke-width="2" /></span>Коли приходять</h2>
+            <p class="muted">День тижня і година за обраний період</p>
+          </div>
+          <div class="card">
+            <WeekHeatmap :cells="s.heatmap" />
           </div>
         </section>
 

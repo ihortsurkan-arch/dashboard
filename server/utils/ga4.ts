@@ -1,5 +1,5 @@
 import { BetaAnalyticsDataClient } from '@google-analytics/data'
-import type { DailyRow, LabelValue, MonthlyRow, Stats, TableResult } from '~~/shared/stats'
+import type { DailyRow, HeatCell, LabelValue, MonthlyRow, PrevDailyRow, Stats, TableResult } from '~~/shared/stats'
 import type { Landing } from './auth'
 
 type Filter = Record<string, any>
@@ -67,6 +67,7 @@ function buildRequests(hostname: string, leadEvent: string, cur: { from: string;
   const host = str('hostName', hostname)
   const lead = { andGroup: { expressions: [host, str('eventName', leadEvent)] } }
   const curRange = [{ startDate: cur.from, endDate: cur.to }]
+  const prevRange = [{ startDate: prev.from, endDate: prev.to }]
   const both = [...curRange, { startDate: prev.from, endDate: prev.to }]
   const r = (dims: string[], metrics: string[], filter: Filter, extra: ReportRequest = {}): ReportRequest => ({
     dimensions: dims.map((name) => ({ name })),
@@ -78,9 +79,13 @@ function buildRequests(hostname: string, leadEvent: string, cur: { from: string;
   })
   return {
     totals: r([], ['sessions', 'averageSessionDuration', 'bounceRate'], host, { dateRanges: both }),
-    leadTotals: r([], ['eventCount', 'averageSessionDuration'], lead, { dateRanges: both }),
+    leadTotals: r([], ['eventCount', 'averageSessionDuration', 'sessions'], lead, { dateRanges: both }),
     daily: r(['date'], ['sessions', 'averageSessionDuration', 'bounceRate'], host),
     dailyLeads: r(['date'], ['eventCount', 'averageSessionDuration'], lead),
+    dailyPrev: r(['date'], ['sessions'], host, { dateRanges: prevRange }),
+    dailyLeadsPrev: r(['date'], ['eventCount'], lead, { dateRanges: prevRange }),
+    heat: r(['dayOfWeek', 'hour'], ['sessions'], host),
+    heatLeads: r(['dayOfWeek', 'hour'], ['eventCount'], lead),
     monthly: r(['yearMonth'], ['sessions'], host),
     monthlyLeads: r(['yearMonth'], ['eventCount'], lead),
     sessionsByDevice: r(['deviceCategory'], ['sessions'], host),
@@ -174,6 +179,29 @@ export function buildStats(landing: Landing, leadEvent: string, cur: { from: str
     d.avgSessionDurationLeads = num(row.metricValues[1])
   }
 
+  const prevMap = new Map<string, PrevDailyRow>()
+  for (const d of allDays(prev.from, prev.to)) prevMap.set(d, { date: d, sessions: 0, leads: 0 })
+  for (const row of r.dailyPrev.rows ?? []) {
+    const d = prevMap.get(ymd(row.dimensionValues[0].value))
+    if (d) d.sessions = num(row.metricValues[0])
+  }
+  for (const row of r.dailyLeadsPrev.rows ?? []) {
+    const d = prevMap.get(ymd(row.dimensionValues[0].value))
+    if (d) d.leads = num(row.metricValues[0])
+  }
+
+  // GA4 dayOfWeek: 0 = Sunday. Stored Monday-first.
+  const heat: HeatCell[] = []
+  for (let dow = 0; dow < 7; dow++) for (let hour = 0; hour < 24; hour++) heat.push({ dow, hour, sessions: 0, leads: 0 })
+  const cell = (row: any) => {
+    const gaDow = Number(row.dimensionValues[0].value)
+    const hour = Number(row.dimensionValues[1].value)
+    if (!Number.isInteger(gaDow) || !Number.isInteger(hour) || hour < 0 || hour > 23) return null
+    return heat[((gaDow + 6) % 7) * 24 + hour]
+  }
+  for (const row of r.heat.rows ?? []) { const c = cell(row); if (c) c.sessions = num(row.metricValues[0]) }
+  for (const row of r.heatLeads.rows ?? []) { const c = cell(row); if (c) c.leads = num(row.metricValues[0]) }
+
   const monthMap = new Map<string, MonthlyRow>()
   for (const m of monthsBetween(cur.from, cur.to)) monthMap.set(m, { month: m, sessions: 0, leads: 0 })
   const ym = (s: string) => `${s.slice(0, 4)}-${s.slice(4, 6)}`
@@ -200,6 +228,9 @@ export function buildStats(landing: Landing, leadEvent: string, cur: { from: str
       bounceRate: { value: tc ? num(tc[2]) : null, prev: tp ? num(tp[2]) : null },
     },
     daily: [...dailyMap.values()],
+    dailyPrev: [...prevMap.values()],
+    leadSessions: { value: lc ? num(lc[2]) : 0, prev: lp ? num(lp[2]) : 0 },
+    heatmap: heat,
     monthly: [...monthMap.values()],
     sessionsByDevice: labelValues(r.sessionsByDevice),
     sessionsByChannel: labelValues(r.sessionsByChannel),
@@ -221,7 +252,7 @@ export async function getStats(landing: Landing, from: string, to: string): Prom
   const leadEvent = ga4.leadEvent || 'generate_lead'
   const { range, prev } = periods(from, to)
   const mock = String(ga4.mock) === '1' || String(ga4.mock) === 'true'
-  const key = `${landing.hostname}|${from}|${to}|${leadEvent}|${mock}`
+  const key = `v2|${landing.hostname}|${from}|${to}|${leadEvent}|${mock}`
   const ttl = Number(ga4.cacheTtl) * 1000
   const hit = cache.get(key)
   if (hit && Date.now() - hit.at < ttl) return { ...hit.data, landing: { id: landing.id, name: landing.name, hostname: landing.hostname } }

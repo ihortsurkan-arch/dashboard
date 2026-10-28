@@ -19,6 +19,19 @@ export interface DailyRow {
   avgSessionDurationLeads: number
 }
 
+export interface PrevDailyRow {
+  date: string // YYYY-MM-DD, a day of the previous period
+  sessions: number
+  leads: number
+}
+
+export interface HeatCell {
+  dow: number // 0 = Monday … 6 = Sunday
+  hour: number // 0–23, property time zone
+  sessions: number
+  leads: number
+}
+
 export interface MonthlyRow {
   month: string // YYYY-MM
   sessions: number
@@ -44,6 +57,11 @@ export interface Stats {
     bounceRate: Kpi
   }
   daily: DailyRow[]
+  /** Same length as the current period, day i of the previous period. */
+  dailyPrev: PrevDailyRow[]
+  /** Sessions that had at least one lead event (current and previous period). */
+  leadSessions: Kpi
+  heatmap: HeatCell[]
   monthly: MonthlyRow[]
   sessionsByDevice: LabelValue[]
   sessionsByChannel: LabelValue[]

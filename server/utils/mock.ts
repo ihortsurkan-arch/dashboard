@@ -63,6 +63,23 @@ const REFERRERS: [string, number][] = [
   ['', 0.31], ['https://l.instagram.com/', 0.33], ['https://www.tiktok.com/', 0.14], ['https://bit.ly/4jNgcAE', 0.12], ['https://t.me/', 0.1],
 ]
 
+// Evening-heavy traffic with a weekend lift: a plausible shape for social-bio landings.
+function heat(host: string, total: number, kind: string) {
+  const w: { dow: number; hour: number; w: number }[] = []
+  for (let gaDow = 0; gaDow < 7; gaDow++) {
+    for (let hour = 0; hour < 24; hour++) {
+      const evening = Math.exp(-((hour - 21) ** 2) / 18) + 0.55 * Math.exp(-((hour - 13) ** 2) / 10) + 0.08
+      const weekend = gaDow === 0 || gaDow === 6 ? 1.25 : 1
+      w.push({ dow: gaDow, hour, w: evening * weekend * (0.7 + hash(kind + host + gaDow + ':' + hour) * 0.6) })
+    }
+  }
+  const sum = w.reduce((a, x) => a + x.w, 0)
+  return w
+    .map((x) => ({ ...x, v: Math.round((x.w / sum) * total) }))
+    .filter((x) => x.v > 0)
+    .map((x) => ({ dimensionValues: dv(String(x.dow), String(x.hour).padStart(2, '0')), metricValues: mv(x.v) }))
+}
+
 export function mockReports(host: string, requests: Record<string, any>): any {
   const cur = requests.daily.dateRanges[0]
   const prevR = requests.totals.dateRanges[1]
@@ -89,11 +106,15 @@ export function mockReports(host: string, requests: Record<string, any>): any {
       { dimensionValues: dv('date_range_1'), metricValues: mv(p.s, p.dur, p.bounce) },
     ] },
     leadTotals: { rows: [
-      { dimensionValues: dv('date_range_0'), metricValues: mv(c.l, c.durLeads) },
-      { dimensionValues: dv('date_range_1'), metricValues: mv(p.l, p.durLeads) },
+      { dimensionValues: dv('date_range_0'), metricValues: mv(c.l, c.durLeads, Math.round(c.l * 0.86)) },
+      { dimensionValues: dv('date_range_1'), metricValues: mv(p.l, p.durLeads, Math.round(p.l * 0.86)) },
     ] },
     daily: { rows: c.ds.map((x) => ({ dimensionValues: dv(x.d.replaceAll('-', '')), metricValues: mv(x.sessions, x.dur, x.bounce) })) },
     dailyLeads: { rows: c.ds.filter((x) => x.leads).map((x) => ({ dimensionValues: dv(x.d.replaceAll('-', '')), metricValues: mv(x.leads, x.durLeads) })) },
+    dailyPrev: { rows: p.ds.map((x) => ({ dimensionValues: dv(x.d.replaceAll('-', '')), metricValues: mv(x.sessions) })) },
+    dailyLeadsPrev: { rows: p.ds.filter((x) => x.leads).map((x) => ({ dimensionValues: dv(x.d.replaceAll('-', '')), metricValues: mv(x.leads) })) },
+    heat: { rows: heat(host, c.s, 'sessions') },
+    heatLeads: { rows: heat(host, c.l, 'leads') },
     monthly: { rows: [...months].map(([k, m]) => ({ dimensionValues: dv(k), metricValues: mv(m.s) })) },
     monthlyLeads: { rows: [...months].map(([k, m]) => ({ dimensionValues: dv(k), metricValues: mv(m.l) })) },
     sessionsByDevice: { rows: lv(split(c.s, DEVICES)) },
