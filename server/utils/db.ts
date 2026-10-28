@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS user_landings (
 `
 
 async function createRunner(): Promise<Runner> {
-  const { databaseUrl } = useRuntimeConfig()
+  // NUXT_DATABASE_URL, or the variables Vercel/Neon add when a database is connected
+  const databaseUrl = useRuntimeConfig().databaseUrl || process.env.DATABASE_URL || process.env.POSTGRES_URL || ''
   if (databaseUrl) {
     const sql = postgres(databaseUrl, { max: 3, idle_timeout: 20, prepare: false })
     await sql.unsafe(SCHEMA)
