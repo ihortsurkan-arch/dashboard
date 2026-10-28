@@ -120,7 +120,7 @@ function printPdf() { window.print() }
 </script>
 
 <template>
-  <div class="container page">
+  <div id="overview" class="container page">
     <div v-if="landingsError" class="card error">{{ t('Не вдалося завантажити список лендингів.') }}</div>
 
     <div v-else-if="!landings?.length" class="card empty-state">
