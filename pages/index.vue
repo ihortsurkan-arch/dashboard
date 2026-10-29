@@ -68,12 +68,21 @@ async function loadOptions() {
 
 // Switching landing clears filters (their values belong to the previous landing)
 watch(landingId, (id, old) => { if (old && id !== old) filters.value = {} })
+// Changes are coalesced (quick clicks through landings or presets send one request), and the
+// filter options are fetched after the stats so the two don't compete for GA4's concurrency quota.
+let timer: ReturnType<typeof setTimeout> | undefined
+let optsKey = ''
+async function refresh() {
+  await load()
+  const k = `${landingId.value}|${from.value}|${to.value}`
+  if (k !== optsKey) { optsKey = k; loadOptions() }
+}
 watch([landingId, from, to, filters], ([id]) => {
   router.replace({ query: { landing: id ?? undefined, from: from.value, to: to.value, ...filters.value } })
   if (id) writeSaved({ landing: id })
-  load()
+  clearTimeout(timer)
+  timer = setTimeout(refresh, stats.value ? 250 : 0)
 }, { immediate: true, deep: true })
-watch([landingId, from, to], () => loadOptions(), { immediate: true })
 
 // ---- derived ----
 const s = computed(() => stats.value)

@@ -15,24 +15,24 @@ export default defineEventHandler(async (event) => {
   const dateRanges = [{ startDate: from, endDate: to }]
   const rows = (res: any) => (res.rows ?? []).map((r: any) => [...r.dimensionValues.map((d: any) => d.value), ...r.metricValues.map((m: any) => Number(m.value))])
   try {
-    const [events] = await client.runReport({
+    const [events] = await gaCall(() => client.runReport({
       property, dateRanges, limit: 500,
       dimensions: [{ name: 'hostName' }, { name: 'eventName' }],
       metrics: [{ name: 'eventCount' }, { name: 'sessions' }, { name: 'totalUsers' }],
       orderBys: [{ dimension: { dimensionName: 'hostName' } }, { metric: { metricName: 'eventCount' }, desc: true }],
-    })
-    const [clicks] = await client.runReport({
+    }))
+    const [clicks] = await gaCall(() => client.runReport({
       property, dateRanges, limit: 500,
       dimensions: [{ name: 'hostName' }, { name: 'linkUrl' }, { name: 'outbound' }],
       metrics: [{ name: 'eventCount' }, { name: 'sessions' }],
       dimensionFilter: { filter: { fieldName: 'eventName', stringFilter: { matchType: 'EXACT', value: String(ga4.leadEvent || 'click') } } },
       orderBys: [{ metric: { metricName: 'eventCount' }, desc: true }],
-    })
-    const [totals] = await client.runReport({
+    }))
+    const [totals] = await gaCall(() => client.runReport({
       property, dateRanges, limit: 100,
       dimensions: [{ name: 'hostName' }],
       metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'screenPageViews' }],
-    })
+    }))
     return {
       range: { from, to },
       leadEvent: ga4.leadEvent,

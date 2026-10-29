@@ -45,6 +45,42 @@ function gaClient() {
   return client
 }
 
+// ---------- GA4 call pacing ----------
+// GA4 allows 10 concurrent requests per property across all server instances. Each instance
+// keeps at most 2 in flight and retries the "concurrent requests / tokens" quota errors with backoff.
+const MAX_IN_FLIGHT = 2
+let inFlight = 0
+const waiting: (() => void)[] = []
+async function acquire() {
+  if (inFlight < MAX_IN_FLIGHT) { inFlight++; return }
+  await new Promise<void>((resolve) => waiting.push(resolve))
+  inFlight++
+}
+function release() {
+  inFlight--
+  waiting.shift()?.()
+}
+function isQuotaError(e: any) {
+  const msg = String(e?.details || e?.message || '')
+  return e?.code === 8 || /RESOURCE_EXHAUSTED|quota/i.test(msg)
+}
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+export async function gaCall<T>(fn: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    await acquire()
+    try {
+      return await fn()
+    } catch (e: any) {
+      // hourly/daily token quotas won't clear in seconds: only retry the concurrency limit
+      const concurrent = /concurrent/i.test(String(e?.details || e?.message || ''))
+      if (!isQuotaError(e) || !concurrent || attempt >= 4) throw e
+    } finally {
+      release()
+    }
+    await sleep(600 * 2 ** attempt + Math.random() * 400)
+  }
+}
+
 /** Runs a named set of report requests, 5 per batch (API limit), against GA4 or the mock. */
 export async function runReports<K extends string>(requests: Record<K, ReportRequest>): Promise<Record<K, Report>> {
   const keys = Object.keys(requests) as K[]
@@ -56,23 +92,23 @@ export async function runReports<K extends string>(requests: Record<K, ReportReq
   const { ga4 } = useRuntimeConfig()
   const chunks: K[][] = []
   for (let i = 0; i < keys.length; i += 5) chunks.push(keys.slice(i, i + 5))
-  // GA4 allows ~10 concurrent requests per property: run at most 3 batches at a time
   const runChunk = async (chunk: K[]) => {
-    const [res] = await gaClient().batchRunReports({
+    const [res] = await gaCall(() => gaClient().batchRunReports({
       property: `properties/${ga4.propertyId}`,
       requests: chunk.map((k) => requests[k]),
-    })
+    }))
     chunk.forEach((k, i) => { out[k] = (res.reports?.[i] ?? {}) as Report })
   }
   try {
-    const queue = [...chunks]
-    await Promise.all(Array.from({ length: Math.min(3, queue.length) }, async () => {
-      while (queue.length) await runChunk(queue.shift()!)
-    }))
+    await Promise.all(chunks.map(runChunk))
   } catch (e: any) {
     if (e?.statusCode) throw e
     console.error('GA4 error', e?.message ?? e)
-    throw createError({ statusCode: 502, statusMessage: `GA4: ${e?.details || e?.message || 'помилка запиту'}` })
+    const busy = isQuotaError(e)
+    throw createError({
+      statusCode: busy ? 503 : 502,
+      statusMessage: busy ? 'GA4 зараз перевантажений запитами. Спробуйте ще раз за хвилину.' : `GA4: ${e?.details || e?.message || 'помилка запиту'}`,
+    })
   }
   return out
 }
@@ -367,15 +403,40 @@ const cache = new Map<string, { at: number; data: any }>()
 const MIN_REFRESH_MS = 60_000
 
 /** Cached value for `key`, or the result of `load`. `fresh` re-reads unless the copy is under a minute old. */
+const pending = new Map<string, Promise<unknown>>()
 async function cached<T>(key: string, fresh: boolean, load: () => Promise<T>): Promise<T> {
   const ttl = Number(useRuntimeConfig().ga4.cacheTtl) * 1000
+  const maxAge = fresh ? MIN_REFRESH_MS : ttl
   const hit = cache.get(key)
-  const age = hit ? Date.now() - hit.at : Infinity
-  if (hit && age < (fresh ? MIN_REFRESH_MS : ttl)) return hit.data as T
-  const data = await load()
-  cache.set(key, { at: Date.now(), data })
-  if (cache.size > 500) cache.delete(cache.keys().next().value!)
-  return data
+  if (hit && Date.now() - hit.at < maxAge) return hit.data as T
+  // the same report already being fetched by another request on this instance
+  const running = pending.get(key)
+  if (running) return running as Promise<T>
+  const p = (async () => {
+    // shared cache: other server instances may have fetched it already
+    if (!isMock()) {
+      try {
+        const [row] = await query<{ value: string; at: Date }>('SELECT value, at FROM ga_cache WHERE key = $1', [key])
+        if (row && Date.now() - new Date(row.at).getTime() < maxAge) {
+          const data = JSON.parse(row.value) as T
+          cache.set(key, { at: new Date(row.at).getTime(), data })
+          return data
+        }
+      } catch {}
+    }
+    const data = await load()
+    cache.set(key, { at: Date.now(), data })
+    if (cache.size > 500) cache.delete(cache.keys().next().value!)
+    if (!isMock()) {
+      query(`INSERT INTO ga_cache (key, value, at) VALUES ($1, $2, now())
+             ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, at = EXCLUDED.at`, [key, JSON.stringify(data)])
+        .then(() => Math.random() < 0.05 ? query(`DELETE FROM ga_cache WHERE at < now() - interval '2 days'`) : null)
+        .catch(() => {})
+    }
+    return data
+  })()
+  pending.set(key, p)
+  try { return await p } finally { pending.delete(key) }
 }
 
 export async function getStats(landing: Landing, from: string, to: string, filters: Filters, fresh = false) {
