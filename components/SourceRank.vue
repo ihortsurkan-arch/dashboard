@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { LabelValue } from '~~/shared/stats'
 
-// Lead sources ranked by leads, one bar length scale, with each source's leads per session beside it.
+// Click sources ranked by leads, one bar length scale, with each source's leads per session beside it.
 const props = defineProps<{
   leadsBySource: LabelValue[]
   sources: { source: string; sessions: number }[]
@@ -25,12 +25,12 @@ const bestConv = computed(() => Math.max(...rows.value.map((r) => r.conv ?? 0)))
 </script>
 
 <template>
-  <div v-if="!rows.length" class="empty">{{ t('Немає лідів за обраний період') }}</div>
-  <div v-else class="rank" role="table" :aria-label="t('Джерела лідів')">
+  <div v-if="!rows.length" class="empty">{{ t('Немає кліків за обраний період') }}</div>
+  <div v-else class="rank" role="table" :aria-label="t('Джерела кліків')">
     <div class="head" role="row">
       <span role="columnheader">{{ t('Джерело') }}</span>
-      <span role="columnheader" class="r">{{ t('Ліди') }}</span>
-      <span role="columnheader" class="r">{{ t('Ліди / сесії') }}</span>
+      <span role="columnheader" class="r">{{ t('Кліки') }}</span>
+      <span role="columnheader" class="r">{{ t('Кліки / сесії') }}</span>
     </div>
     <div v-for="(r, i) in rows" :key="r.source" class="line" :class="{ dim: active && active !== r.source }" role="row" tabindex="0" :style="{ '--i': i }" @click="emit('pick', r.source)" @keydown.enter="emit('pick', r.source)">
       <span class="name" role="cell" :title="r.source">{{ r.source }}</span>
@@ -39,7 +39,7 @@ const bestConv = computed(() => Math.max(...rows.value.map((r) => r.conv ?? 0)))
         <b class="num">{{ fmtInt(r.leads) }}</b>
       </span>
       <span class="conv num" :class="{ best: r.conv != null && r.conv === bestConv && rows.length > 1 }" role="cell"
-            :title="r.sessions ? t('{l} лідів на {s} сесій', { l: fmtInt(r.leads), s: fmtInt(r.sessions) }) : t('Немає даних про сесії')">
+            :title="r.sessions ? t('{l} кліків на {s} сесій', { l: fmtInt(r.leads), s: fmtInt(r.sessions) }) : t('Немає даних про сесії')">
         {{ r.conv == null ? '—' : fmtPct(r.conv, 1) }}
       </span>
     </div>

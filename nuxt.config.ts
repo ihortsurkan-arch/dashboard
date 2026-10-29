@@ -30,7 +30,7 @@ export default defineNuxtConfig({
       propertyId: '',
       clientEmail: '',
       privateKey: '',
-      leadEvent: 'generate_lead',
+      leadEvent: 'click',
       // Cache GA4 answers for N seconds (per server instance).
       cacheTtl: 600,
       // "1" → generated demo numbers instead of GA4 (for local development).

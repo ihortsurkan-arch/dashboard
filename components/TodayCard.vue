@@ -6,7 +6,7 @@ import type { Kpi } from '~~/shared/stats'
 const props = defineProps<{ sessions: Kpi; leads: Kpi }>()
 const items = computed(() => [
   { label: t('Сесії'), k: props.sessions, color: '--sessions' },
-  { label: t('Ліди'), k: props.leads, color: '--leads' },
+  { label: t('Кліки'), k: props.leads, color: '--leads' },
 ])
 </script>
 

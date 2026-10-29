@@ -2,7 +2,7 @@
 import { Flag } from 'lucide-vue-next'
 import type { Goal } from '~~/shared/stats'
 
-// Lead plan for the current calendar month: done so far, linear forecast to month end.
+// Click plan for the current calendar month: done so far, linear forecast to month end.
 const props = defineProps<{
   goal: Goal | null
   mtd: { month: string; leads: number; daysElapsed: number; daysInMonth: number }
@@ -24,18 +24,18 @@ const timeShare = computed(() => props.mtd.daysElapsed / props.mtd.daysInMonth)
       <span v-if="goal" class="state" :class="onTrack ? 'ok' : 'bad'">{{ onTrack ? t('Встигаємо') : t('Відстаємо') }}</span>
     </div>
     <template v-if="goal">
-      <p class="big"><b class="num">{{ fmtInt(done) }}</b> <span class="muted">{{ t('з {g} лідів', { g: fmtInt(goal.leads) }) }}</span></p>
+      <p class="big"><b class="num">{{ fmtInt(done) }}</b> <span class="muted">{{ t('з {g} кліків', { g: fmtInt(goal.leads) }) }}</span></p>
       <div class="track" role="img" :aria-label="t('{p} плану виконано', { p: fmtPct(share, 0) })">
         <div class="fc" :style="{ width: `${fShare * 100}%` }" />
         <div class="bar" :style="{ width: `${share * 100}%` }" />
         <div class="today" :style="{ left: `${timeShare * 100}%` }" :title="t('Сьогодні')" />
       </div>
       <p class="note">
-        {{ t('Прогноз на кінець місяця: {f}', { f: fmtInt(forecast) }) }}<template v-if="!onTrack">. {{ t('Треба ~{n} лідів на день', { n: fmtDec(Math.max(0, goal.leads - done) / Math.max(1, mtd.daysInMonth - mtd.daysElapsed + 1), 1) }) }}</template>
+        {{ t('Прогноз на кінець місяця: {f}', { f: fmtInt(forecast) }) }}<template v-if="!onTrack">. {{ t('Треба ~{n} кліків на день', { n: fmtDec(Math.max(0, goal.leads - done) / Math.max(1, mtd.daysInMonth - mtd.daysElapsed + 1), 1) }) }}</template>
       </p>
     </template>
     <template v-else>
-      <p class="big"><b class="num">{{ fmtInt(done) }}</b> <span class="muted">{{ t('лідів з початку місяця') }}</span></p>
+      <p class="big"><b class="num">{{ fmtInt(done) }}</b> <span class="muted">{{ t('кліків з початку місяця') }}</span></p>
       <p class="note">
         {{ t('Прогноз на кінець місяця: {f}', { f: fmtInt(forecast) }) }}.
         <NuxtLink v-if="isAdmin" :to="{ path: '/admin', query: { tab: 'landings', goal: landingId } }">{{ t('Задати план') }}</NuxtLink>

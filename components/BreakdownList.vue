@@ -18,7 +18,7 @@ const conv = (r: SessionsLeads) => (r.sessions ? r.leads / r.sessions : null)
 
 function exportCsv() {
   const q = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
-  const lines = [[props.label, t('Сесії'), t('Ліди'), t('Ліди / сесії')].map(q).join(',')]
+  const lines = [[props.label, t('Сесії'), t('Кліки'), t('Кліки / сесії')].map(q).join(',')]
   for (const r of props.rows) lines.push([r.label, r.sessions, r.leads, conv(r)?.toFixed(4) ?? ''].map(q).join(','))
   const a = document.createElement('a')
   a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }))
@@ -33,8 +33,8 @@ function exportCsv() {
     <div class="head" role="row">
       <span role="columnheader">{{ label }}</span>
       <span role="columnheader">{{ t('Сесії') }}</span>
-      <span role="columnheader" class="r">{{ t('Ліди') }}</span>
-      <span role="columnheader" class="r">{{ t('Ліди / сесії') }}</span>
+      <span role="columnheader" class="r">{{ t('Кліки') }}</span>
+      <span role="columnheader" class="r">{{ t('Кліки / сесії') }}</span>
     </div>
     <div v-for="(r, i) in shown" :key="r.label" class="line" role="row" :style="{ '--i': i }"
          :class="{ pick: pickable, dim: active && active !== r.label }" :tabindex="pickable ? 0 : undefined"

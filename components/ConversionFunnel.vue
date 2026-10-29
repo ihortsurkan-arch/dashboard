@@ -20,7 +20,7 @@ const counted = useCountUp(() => (cur.value == null ? null : cur.value * 100), {
     <div class="hero">
       <div class="rate">{{ cur == null ? '—' : `${fmtDec(counted ?? 0)}%` }}</div>
       <div class="caption">
-        {{ t('сесій закінчились лідом') }}
+        {{ t('сесій закінчились кліком') }}
         <span v-if="pp != null" class="pp" :class="pp >= 0 ? 'up' : 'down'">{{ pp > 0 ? '+' : pp < 0 ? '−' : '' }}{{ fmtDec(Math.abs(pp)) }} {{ t('п.п.') }}</span>
       </div>
     </div>
@@ -32,7 +32,7 @@ const counted = useCountUp(() => (cur.value == null ? null : cur.value * 100), {
         <div class="track thin"><div class="bar ghost" :style="{ width: w(sessions.prev) }" /></div>
       </div>
       <div class="step">
-        <div class="row"><span>{{ t('Сесії з лідом') }}</span><b class="num">{{ fmtInt(leadSessions.value) }}</b></div>
+        <div class="row"><span>{{ t('Сесії з кліком') }}</span><b class="num">{{ fmtInt(leadSessions.value) }}</b></div>
         <div class="track"><div class="bar l" :style="{ width: w(leadSessions.value) }" /></div>
         <div class="track thin"><div class="bar ghost" :style="{ width: w(leadSessions.prev) }" /></div>
       </div>
@@ -40,7 +40,7 @@ const counted = useCountUp(() => (cur.value == null ? null : cur.value * 100), {
 
     <p class="foot">
       <span class="key"><span class="sw ghost" />{{ t('попередній період') }}</span>
-      <span>{{ t('Подій ліда:') }} <b class="num">{{ fmtInt(leads.value) }}</b><template v-if="leadSessions.value">{{ t(', у середньому {v} на сесію', { v: fmtDec(leads.value! / leadSessions.value, 2) }) }}</template></span>
+      <span>{{ t('Подій кліку:') }} <b class="num">{{ fmtInt(leads.value) }}</b><template v-if="leadSessions.value">{{ t(', у середньому {v} на сесію', { v: fmtDec(leads.value! / leadSessions.value, 2) }) }}</template></span>
     </p>
   </div>
 </template>

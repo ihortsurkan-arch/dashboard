@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Bar } from 'vue-chartjs'
 
-// One series per chart, coloured by the metric (Sessions blue, Leads orange).
+// One series per chart, coloured by the metric (Sessions blue, Clicks orange).
 // Horizontal bars carry their value at the bar end; vertical time bars rely on axis + tooltip.
 const props = defineProps<{
   labels: string[]

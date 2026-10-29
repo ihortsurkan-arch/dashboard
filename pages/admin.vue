@@ -268,7 +268,7 @@ watch(tab, (v) => {
             <div class="form">
               <label class="field">{{ t('Назва') }} <input v-model="el.name" class="input"></label>
               <label class="field">{{ t('Домен') }} <input v-model="el.hostname" class="input"></label>
-              <label class="field"><span class="lbl-ico"><Flag :size="14" />{{ t('План лідів на {m}', { m: fmtMonthLong(goalMonth) }) }}</span>
+              <label class="field"><span class="lbl-ico"><Flag :size="14" />{{ t('План кліків на {m}', { m: fmtMonthLong(goalMonth) }) }}</span>
                 <input v-model="el.goal" class="input" type="number" min="0" step="1" :placeholder="t('без плану')">
               </label>
             </div>
@@ -285,7 +285,7 @@ watch(tab, (v) => {
     <template v-else-if="tab === 'alerts'">
       <section class="card">
         <h3><Bell :size="16" class="ico" />{{ t('Сповіщення в Telegram') }}</h3>
-        <p class="note">{{ t('Щоранку (о 8:00 за Мадридом узимку, о 9:00 улітку) застосунок перевіряє вчорашній день кожного лендингу: різке падіння лідів, зникнення трафіку або сплеск сесій порівняно з попередніми 14 днями. Щопонеділка надсилає тижневий звіт.') }}</p>
+        <p class="note">{{ t('Щоранку (о 8:00 за Мадридом узимку, о 9:00 улітку) застосунок перевіряє вчорашній день кожного лендингу: різке падіння кліків, зникнення трафіку або сплеск сесій порівняно з попередніми 14 днями. Щопонеділка надсилає тижневий звіт.') }}</p>
         <ul class="status">
           <li :class="tg?.configured ? 'ok' : 'bad'">
             <CircleCheck v-if="tg?.configured" :size="16" /><CircleAlert v-else :size="16" />

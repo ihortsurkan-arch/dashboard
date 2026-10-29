@@ -20,7 +20,7 @@ function bg(v: number) {
   return `color-mix(in oklab, var(${colorVar.value}) ${share}%, var(--surface))`
 }
 const hourLabel = (h: number) => `${String(h).padStart(2, '0')}:00`
-const unit = computed(() => (metric.value === 'sessions' ? t('сес.') : t('лід.')))
+const unit = computed(() => (metric.value === 'sessions' ? t('сес.') : t('клік.')))
 
 const hover = ref<HeatCell | null>(null)
 const tipStyle = ref<Record<string, string>>({})
@@ -40,14 +40,14 @@ function show(c: HeatCell, e: Event) {
     <div class="top">
       <div class="seg" role="group" :aria-label="t('Показник')">
         <button :aria-pressed="metric === 'sessions'" @click="metric = 'sessions'"><span class="sw" style="background: var(--sessions)" />{{ t('Сесії') }}</button>
-        <button :aria-pressed="metric === 'leads'" @click="metric = 'leads'"><span class="sw" style="background: var(--leads)" />{{ t('Ліди') }}</button>
+        <button :aria-pressed="metric === 'leads'" @click="metric = 'leads'"><span class="sw" style="background: var(--leads)" />{{ t('Кліки') }}</button>
       </div>
       <p v-if="total" class="peak">{{ t('Пік:') }} <b>{{ DAYS_FULL[peak.dow] }}, {{ hourLabel(peak.hour) }}</b> ({{ fmtInt(peak[metric]) }} {{ unit }})</p>
     </div>
 
     <div v-if="!total" class="empty">{{ t('Немає даних за обраний період') }}</div>
     <div v-else ref="wrap" class="grid-wrap" @mouseleave="hover = null">
-      <div class="grid" role="grid" :aria-label="t('{m} за днем тижня і годиною', { m: metric === 'sessions' ? t('Сесії') : t('Ліди') })">
+      <div class="grid" role="grid" :aria-label="t('{m} за днем тижня і годиною', { m: metric === 'sessions' ? t('Сесії') : t('Кліки') })">
         <template v-for="d in 7" :key="d">
           <span class="day" role="rowheader">{{ DAYS[d - 1] }}</span>
           <button
@@ -64,7 +64,7 @@ function show(c: HeatCell, e: Event) {
       </div>
       <div v-if="hover" class="tip" :style="tipStyle" role="status">
         <span class="t">{{ DAYS_FULL[hover.dow] }}, {{ hourLabel(hover.hour) }}–{{ hourLabel((hover.hour + 1) % 24) }}</span>
-        <span><b class="num">{{ fmtInt(hover.sessions) }}</b> {{ t('сесій') }}, <b class="num">{{ fmtInt(hover.leads) }}</b> {{ t('лідів') }}</span>
+        <span><b class="num">{{ fmtInt(hover.sessions) }}</b> {{ t('сесій') }}, <b class="num">{{ fmtInt(hover.leads) }}</b> {{ t('кліків') }}</span>
       </div>
     </div>
 

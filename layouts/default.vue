@@ -34,7 +34,7 @@ const pages = computed(() => [
 const sections = computed(() => [
   { id: 'overview', icon: Gauge, label: t('Огляд') },
   { id: 'conversion', icon: Filter, label: t('Конверсія') },
-  { id: 'leads', icon: Target, label: t('Ліди') },
+  { id: 'leads', icon: Target, label: t('Кліки') },
   { id: 'sessions', icon: MousePointerClick, label: t('Сесії') },
   { id: 'geo', icon: Globe2, label: t('Географія') },
   { id: 'when', icon: CalendarClock, label: t('Коли приходять') },

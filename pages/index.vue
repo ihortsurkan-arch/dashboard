@@ -92,8 +92,8 @@ const insight = computed(() => {
   const dl = change(leads.value, leads.prev)
   if (leads.value != null) {
     out.push(dl == null
-      ? t('{n} лідів за період.', { n: fmtInt(leads.value) })
-      : t('{n} лідів, {d} до попереднього періоду.', { n: fmtInt(leads.value), d: `${dl > 0 ? '+' : dl < 0 ? '−' : ''}${fmtPct(Math.abs(dl), 0)}` }))
+      ? t('{n} кліків за період.', { n: fmtInt(leads.value) })
+      : t('{n} кліків, {d} до попереднього періоду.', { n: fmtInt(leads.value), d: `${dl > 0 ? '+' : dl < 0 ? '−' : ''}${fmtPct(Math.abs(dl), 0)}` }))
   }
   const ses = x.kpis.sessions.value ?? 0
   const conv = ses ? (x.leadSessions.value ?? 0) / ses : null
@@ -107,7 +107,7 @@ const insight = computed(() => {
   }
   const totalLeads = x.leadsBySource.reduce((a, r) => a + r.value, 0)
   const top = x.leadsBySource[0]
-  if (top && totalLeads) out.push(t('Найбільше лідів дає {s} ({p}).', { s: top.label, p: fmtPct(top.value / totalLeads, 0) }))
+  if (top && totalLeads) out.push(t('Найбільше кліків дає {s} ({p}).', { s: top.label, p: fmtPct(top.value / totalLeads, 0) }))
   const sess = new Map(x.sources.rows.map((r) => [r.source, r.sessions]))
   const best = x.leadsBySource.filter((r) => (sess.get(r.label) ?? 0) >= 20)
     .map((r) => ({ s: r.label, c: r.value / (sess.get(r.label) ?? 1) })).sort((a, b) => b.c - a.c)[0]
@@ -169,13 +169,13 @@ function printPdf() { window.print() }
         <section class="card strip" :aria-label="t('Ключові показники')">
           <KpiCard :icon="MousePointerClick" :order="0" title="Sessions" :value="s.kpis.sessions.value" :prev="s.kpis.sessions.prev" format="int"
                    :spark="s.daily.map((d) => d.sessions)" :spark-labels="days.map(fmtDay)" color-var="--sessions" />
-          <KpiCard :icon="Target" :order="1" title="Leads" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
+          <KpiCard :icon="Target" :order="1" title="Clicks" :value="s.kpis.leads.value" :prev="s.kpis.leads.prev" format="int"
                    :spark="s.daily.map((d) => d.leads)" :spark-labels="days.map(fmtDay)" color-var="--leads" />
           <KpiCard :icon="Timer" :order="2" title="Avg. Session Duration" :value="s.kpis.avgSessionDuration.value" :prev="s.kpis.avgSessionDuration.prev" format="duration"
                    :spark="s.daily.map((d) => d.avgSessionDuration)" :spark-labels="days.map(fmtDay)" color-var="--sessions" />
-          <KpiCard :icon="Hourglass" :order="3" title="Avg. Session Duration for Leads" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
+          <KpiCard :icon="Hourglass" :order="3" title="Avg. Session Duration for Clicks" :value="s.kpis.leads.value ? s.kpis.avgSessionDurationLeads.value : null"
                    :prev="s.kpis.leads.prev ? s.kpis.avgSessionDurationLeads.prev : null" format="duration"
-                   :spark="s.daily.map((d) => d.avgSessionDurationLeads)" :spark-labels="days.map(fmtDay)" color-var="--leads" :hint="t('Немає лідів за період')" />
+                   :spark="s.daily.map((d) => d.avgSessionDurationLeads)" :spark-labels="days.map(fmtDay)" color-var="--leads" :hint="t('Немає кліків за період')" />
           <KpiCard :icon="CornerUpLeft" :order="4" title="Bounce rate" :value="s.kpis.sessions.value ? s.kpis.bounceRate.value : null" :prev="s.kpis.sessions.prev ? s.kpis.bounceRate.prev : null"
                    format="pct" good-when="down" :spark="s.daily.map((d) => d.bounceRate)" :spark-labels="days.map(fmtDay)" color-var="--sessions" />
         </section>
@@ -188,16 +188,16 @@ function printPdf() { window.print() }
         <section id="conversion" class="section">
           <div class="section-head">
             <h2><span class="key leads" aria-hidden="true"><Filter :size="16" :stroke-width="2" /></span>{{ t('Конверсія') }}</h2>
-            <p class="muted">{{ t('Скільки сесій закінчуються лідом і які джерела конвертують краще') }}</p>
+            <p class="muted">{{ t('Скільки сесій закінчуються кліком і які джерела конвертують краще') }}</p>
           </div>
           <div class="grid-2">
             <div class="card">
-              <h3>{{ t('Сесії → ліди') }}</h3>
-              <p class="note">{{ t('Частка сесій, у яких була подія ліда') }}</p>
+              <h3>{{ t('Сесії → кліки') }}</h3>
+              <p class="note">{{ t('Частка сесій, у яких була подія кліку') }}</p>
               <ConversionFunnel :sessions="s.kpis.sessions" :lead-sessions="s.leadSessions" :leads="s.kpis.leads" />
             </div>
             <div class="card">
-              <h3>{{ t('Джерела лідів') }}</h3>
+              <h3>{{ t('Джерела кліків') }}</h3>
               <p class="note">{{ t('Клік по джерелу фільтрує весь дашборд') }}</p>
               <SourceRank :leads-by-source="s.leadsBySource" :sources="s.sources.rows" :active="filters.source" @pick="pick('source', $event)" />
             </div>
@@ -206,42 +206,42 @@ function printPdf() { window.print() }
 
         <section id="leads" class="section">
           <div class="section-head">
-            <h2><span class="key leads" aria-hidden="true"><Target :size="16" :stroke-width="2" /></span>{{ t('Ліди') }}</h2>
+            <h2><span class="key leads" aria-hidden="true"><Target :size="16" :stroke-width="2" /></span>{{ t('Кліки') }}</h2>
             <p class="muted">{{ t('Подія') }} <code>{{ s.leadEvent }}</code> {{ t('у GA4') }}</p>
           </div>
           <div class="grid-3">
             <div class="card">
-              <h3>Leads by Source</h3>
-              <p class="note">{{ t('Частка лідів за джерелом сесії') }}</p>
-              <PieChart v-bind="lv(s.leadsBySource)" series-name="Leads by Source" pickable :active="filters.source" @pick="pick('source', $event)" />
+              <h3>Clicks by Source</h3>
+              <p class="note">{{ t('Частка кліків за джерелом сесії') }}</p>
+              <PieChart v-bind="lv(s.leadsBySource)" series-name="Clicks by Source" pickable :active="filters.source" @pick="pick('source', $event)" />
             </div>
             <div class="card">
-              <h3>Leads by Device</h3>
-              <p class="note">{{ t('Ліди за типом пристрою') }}</p>
-              <BarsChart v-bind="lv(s.leadsByDevice)" horizontal series-name="Leads" color-var="--leads" pickable :active="filters.device" @pick="pick('device', $event)" />
+              <h3>Clicks by Device</h3>
+              <p class="note">{{ t('Кліки за типом пристрою') }}</p>
+              <BarsChart v-bind="lv(s.leadsByDevice)" horizontal series-name="Clicks" color-var="--leads" pickable :active="filters.device" @pick="pick('device', $event)" />
             </div>
             <div class="card">
-              <h3>Leads by Channel</h3>
-              <p class="note">{{ t('Ліди за каналом GA4') }}</p>
-              <BarsChart v-bind="lv(s.leadsByChannel)" horizontal series-name="Leads" color-var="--leads" pickable :active="filters.channel" @pick="pick('channel', $event)" />
+              <h3>Clicks by Channel</h3>
+              <p class="note">{{ t('Кліки за каналом GA4') }}</p>
+              <BarsChart v-bind="lv(s.leadsByChannel)" horizontal series-name="Clicks" color-var="--leads" pickable :active="filters.channel" @pick="pick('channel', $event)" />
             </div>
           </div>
           <div class="card">
-            <h3>Leads Daily</h3>
-            <p class="note">{{ t('Ліди по днях проти попереднього періоду') }}</p>
+            <h3>Clicks Daily</h3>
+            <p class="note">{{ t('Кліки по днях проти попереднього періоду') }}</p>
             <TrendChart :dates="days" :values="s.daily.map((d) => d.leads)" :prev-dates="prevDays" :prev-values="s.dailyPrev.map((d) => d.leads)"
-                        series-name="Leads" color-var="--leads" :annotations="s.annotations" />
+                        series-name="Clicks" color-var="--leads" :annotations="s.annotations" />
             <AnnotationsPanel :notes="s.annotations" :landing-id="s.landing.id" :from="s.range.from" :to="s.range.to" @changed="load(true)" />
           </div>
           <div class="grid-2">
             <div class="card">
-              <h3>Leads Monthly</h3>
-              <p class="note">{{ t('Ліди по місяцях у межах періоду') }}</p>
-              <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.leads)" series-name="Leads" color-var="--leads" />
+              <h3>Clicks Monthly</h3>
+              <p class="note">{{ t('Кліки по місяцях у межах періоду') }}</p>
+              <BarsChart :labels="monthLabels" :values="s.monthly.map((m) => m.leads)" series-name="Clicks" color-var="--leads" />
             </div>
             <div class="card">
               <h3>{{ t('Сторінки входу') }}</h3>
-              <p class="note">{{ t('Перша сторінка сесії, ліди і конверсія') }}</p>
+              <p class="note">{{ t('Перша сторінка сесії, кліки і конверсія') }}</p>
               <BreakdownList :rows="s.landingPages" :label="t('Сторінка')" :limit="8" csv="landing-pages" />
             </div>
           </div>
@@ -284,7 +284,7 @@ function printPdf() { window.print() }
           <div class="grid-2">
             <div class="card">
               <h3>{{ t('Країни') }}</h3>
-              <p class="note">{{ t('Сесії, ліди і конверсія за країною') }}</p>
+              <p class="note">{{ t('Сесії, кліки і конверсія за країною') }}</p>
               <BreakdownList :rows="s.countries" :label="t('Країна')" :limit="10" pickable :active="filters.country" csv="countries" @pick="pick('country', $event)" />
             </div>
             <div class="card">

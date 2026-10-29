@@ -23,7 +23,7 @@ export async function runAlerts(opts: { forceWeekly?: boolean } = {}) {
     const name = escapeHtml(l.name)
     const link = base ? ` <a href="${base}/?landing=${l.id}">відкрити</a>` : ''
     if (avgS >= 20 && y.sessions === 0) alerts.push(`⚠️ <b>${name}</b>: учора 0 сесій (звично ~${fmt(avgS)}). Перевірте лендинг і трекінг.${link}`)
-    else if (avgL >= 3 && y.leads < avgL * 0.5) alerts.push(`📉 <b>${name}</b>: учора ${fmt(y.leads)} лідів, звично ~${fmt(avgL)} (${pct(y.leads / avgL - 1)}).${link}`)
+    else if (avgL >= 3 && y.leads < avgL * 0.5) alerts.push(`📉 <b>${name}</b>: учора ${fmt(y.leads)} кліків, звично ~${fmt(avgL)} (${pct(y.leads / avgL - 1)}).${link}`)
     if (avgS >= 10 && y.sessions > avgS * 2) alerts.push(`📈 <b>${name}</b>: учора ${fmt(y.sessions)} сесій, удвічі більше звичного (~${fmt(avgS)}).${link}`)
   }
 
@@ -36,7 +36,7 @@ export async function runAlerts(opts: { forceWeekly?: boolean } = {}) {
       for (let i = 1; i <= 7; i++) { const d = m.get(day(i)); s += d?.sessions ?? 0; ld += d?.leads ?? 0 }
       for (let i = 8; i <= 14; i++) { const d = m.get(day(i)); ps += d?.sessions ?? 0; pl += d?.leads ?? 0 }
       const ch = pl ? ` (${pct(ld / pl - 1)})` : ''
-      return `• <b>${escapeHtml(l.name)}</b>: ${fmt(ld)} лідів${ch}, ${fmt(s)} сесій, конверсія ${s ? ((ld / s) * 100).toFixed(1).replace('.', ',') : '0'}%`
+      return `• <b>${escapeHtml(l.name)}</b>: ${fmt(ld)} кліків${ch}, ${fmt(s)} сесій, конверсія ${s ? ((ld / s) * 100).toFixed(1).replace('.', ',') : '0'}%`
     })
     weeklyText = `🗓 <b>Тиждень ${day(7)} – ${yesterday}</b>\n${lines.join('\n')}`
   }

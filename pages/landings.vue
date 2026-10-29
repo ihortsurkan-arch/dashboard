@@ -74,7 +74,7 @@ function open(r: OverviewRow) {
 function printPdf() { window.print() }
 function exportCsv() {
   const qq = (v: unknown) => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
-  const lines = [[t('Лендинг'), t('Домен'), t('Сесії'), t('Сесії, попередній'), t('Ліди'), t('Ліди, попередній'), t('Конверсія')].map(qq).join(',')]
+  const lines = [[t('Лендинг'), t('Домен'), t('Сесії'), t('Сесії, попередній'), t('Кліки'), t('Кліки, попередній'), t('Конверсія')].map(qq).join(',')]
   for (const r of rows.value) lines.push([r.name, r.hostname, r.sessions.value, r.sessions.prev, r.leads.value, r.leads.prev, conv(r)?.toFixed(4) ?? ''].map(qq).join(','))
   const a = document.createElement('a')
   a.href = URL.createObjectURL(new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' }))
@@ -113,11 +113,11 @@ function exportCsv() {
             <tr>
               <th :aria-sort="aria('name')"><button class="sort" @click="sortBy('name')">{{ t('Лендинг') }}<component :is="sortKey === 'name' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'name' }" /></button></th>
               <th class="r" :aria-sort="aria('sessions')"><button class="sort" @click="sortBy('sessions')">{{ t('Сесії') }}<component :is="sortKey === 'sessions' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'sessions' }" /></button></th>
-              <th class="r" :aria-sort="aria('leads')"><button class="sort" @click="sortBy('leads')">{{ t('Ліди') }}<component :is="sortKey === 'leads' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'leads' }" /></button></th>
-              <th class="r" :aria-sort="aria('dLeads')"><button class="sort" @click="sortBy('dLeads')">{{ t('Зміна лідів') }}<component :is="sortKey === 'dLeads' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'dLeads' }" /></button></th>
+              <th class="r" :aria-sort="aria('leads')"><button class="sort" @click="sortBy('leads')">{{ t('Кліки') }}<component :is="sortKey === 'leads' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'leads' }" /></button></th>
+              <th class="r" :aria-sort="aria('dLeads')"><button class="sort" @click="sortBy('dLeads')">{{ t('Зміна кліків') }}<component :is="sortKey === 'dLeads' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'dLeads' }" /></button></th>
               <th class="r" :aria-sort="aria('conv')"><button class="sort" @click="sortBy('conv')">{{ t('Конверсія') }}<component :is="sortKey === 'conv' ? (sortDir === 1 ? ChevronUp : ChevronDown) : ChevronsUpDown" :size="13" class="arrow" :class="{ on: sortKey === 'conv' }" /></button></th>
               <th class="hide-sm">{{ t('Сесії по днях') }}</th>
-              <th class="hide-sm">{{ t('Ліди по днях') }}</th>
+              <th class="hide-sm">{{ t('Кліки по днях') }}</th>
             </tr>
           </thead>
           <TransitionGroup tag="tbody" name="list">
