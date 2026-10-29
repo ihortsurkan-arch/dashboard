@@ -21,6 +21,15 @@ function set(key: FilterKey, value: string) {
 }
 function clear() { emit('update:modelValue', {}) }
 const label = (k: FilterKey) => (k === 'country' ? t(LABELS[k]) : LABELS[k])
+function selectOptions(k: FilterKey) {
+  const list = props.options?.[k] ?? []
+  const cur = props.modelValue[k]
+  return [
+    { value: '', label: t('Усі') },
+    ...(cur && !list.some((o) => o.value === cur) ? [{ value: cur, label: cur }] : []),
+    ...list.map((o) => ({ value: o.value, label: o.value, hint: fmtInt(o.sessions) })),
+  ]
+}
 </script>
 
 <template>
@@ -44,11 +53,7 @@ const label = (k: FilterKey) => (k === 'country' ? t(LABELS[k]) : LABELS[k])
       <div v-if="open" class="grid">
         <label v-for="k in FILTER_KEYS" :key="k" class="field">
           {{ label(k) }}
-          <select class="input" :value="modelValue[k] ?? ''" :disabled="loading && !options" @change="set(k, ($event.target as HTMLSelectElement).value)">
-            <option value="">{{ t('Усі') }}</option>
-            <option v-if="modelValue[k] && !options?.[k]?.some((o) => o.value === modelValue[k])" :value="modelValue[k]">{{ modelValue[k] }}</option>
-            <option v-for="o in options?.[k] ?? []" :key="o.value" :value="o.value">{{ o.value }} ({{ fmtInt(o.sessions) }})</option>
-          </select>
+          <UiSelect :model-value="modelValue[k] ?? ''" :options="selectOptions(k)" :disabled="loading && !options" @update:model-value="set(k, String($event))" />
         </label>
       </div>
     </Transition>

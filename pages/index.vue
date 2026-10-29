@@ -132,9 +132,7 @@ function printPdf() { window.print() }
     <template v-else>
       <section class="filters" :aria-label="t('Фільтри')">
         <label class="field landing">{{ t('Лендинг') }}
-          <select v-model.number="landingId" class="input">
-            <option v-for="l in landings" :key="l.id" :value="l.id">{{ l.name }} ({{ l.hostname }})</option>
-          </select>
+          <UiSelect :model-value="landingId" @update:model-value="landingId = Number($event)" :options="landings.map((l) => ({ value: l.id, label: l.name, hint: l.hostname }))" />
         </label>
         <PeriodPicker :period="period" />
       </section>
@@ -343,7 +341,6 @@ function printPdf() { window.print() }
 .page { padding-top: 20px; padding-bottom: 56px; display: grid; gap: 18px; }
 .filters { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; }
 .landing { flex: 1 1 280px; max-width: 420px; }
-.landing select { width: 100%; }
 .head { display: grid; gap: 6px; border-top: 1px solid var(--hair); }
 .title-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 16px; }
 .head h1 { font-size: clamp(26px, 3.2vw, 36px); }

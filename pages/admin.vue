@@ -150,6 +150,7 @@ watch(tab, (v) => {
   if (v === 'alerts') refreshTg()
   if (v === 'log') refreshLog()
 }, { immediate: true })
+const roleOptions = computed(() => [{ value: 'user', label: t('Користувач') }, { value: 'admin', label: t('Адміністратор') }])
 </script>
 
 <template>
@@ -174,7 +175,7 @@ watch(tab, (v) => {
             <span class="row"><input v-model="nu.password" class="input grow" autocomplete="new-password"><button class="btn sm" type="button" @click="genPassword(nu)"><KeyRound :size="15" :stroke-width="1.9" />{{ t('Згенерувати') }}</button></span>
           </label>
           <label class="field">{{ t('Роль') }}
-            <select v-model="nu.role" class="input"><option value="user">{{ t('Користувач') }}</option><option value="admin">{{ t('Адміністратор') }}</option></select>
+            <UiSelect :model-value="nu.role" :options="roleOptions" @update:model-value="nu.role = $event as 'user' | 'admin'" />
           </label>
         </div>
         <fieldset v-if="nu.role === 'user'" class="checks">
@@ -212,7 +213,7 @@ watch(tab, (v) => {
             <div v-if="editing === u.id" class="edit">
               <div class="form">
                 <label class="field">{{ t('Роль') }}
-                  <select v-model="edit.role" class="input" :disabled="u.id === me?.id"><option value="user">{{ t('Користувач') }}</option><option value="admin">{{ t('Адміністратор') }}</option></select>
+                  <UiSelect :model-value="edit.role" :options="roleOptions" :disabled="u.id === me?.id" @update:model-value="edit.role = $event as 'user' | 'admin'" />
                 </label>
                 <label class="field">{{ t('Новий пароль (необовʼязково)') }}
                   <span class="row"><input v-model="edit.password" class="input grow" autocomplete="new-password"><button class="btn sm" type="button" @click="genPassword(edit)"><KeyRound :size="15" />{{ t('Згенерувати') }}</button></span>
