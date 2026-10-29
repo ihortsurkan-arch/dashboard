@@ -118,6 +118,17 @@ const ym = (s: string) => `${s.slice(0, 4)}-${s.slice(4, 6)}`
 function str(fieldName: string, value: string): Filter {
   return { filter: { fieldName, stringFilter: { matchType: 'EXACT', value } } }
 }
+/** A landing is stored without "www."; GA4 may report either form, so match both. */
+export function bareHost(h: string): string {
+  return String(h).toLowerCase().replace(/^www\./, '')
+}
+function hostVariants(h: string): string[] {
+  const b = bareHost(h)
+  return isMock() ? [h] : [b, `www.${b}`]
+}
+function hostFilter(h: string): Filter {
+  return { filter: { fieldName: 'hostName', inListFilter: { values: hostVariants(h) } } }
+}
 function and(...expressions: Filter[]): Filter {
   return expressions.length === 1 ? expressions[0] : { andGroup: { expressions } }
 }
@@ -197,7 +208,7 @@ const kpi = (cur: any[] | null, prev: any[] | null, i: number, fallback: number 
 // ---------- dashboard ----------
 
 function buildRequests(hostname: string, leadEvent: string, cur: Range, prev: Range, filters: Filters) {
-  const hostOnly = str('hostName', hostname)
+  const hostOnly = hostFilter(hostname)
   const base = and(hostOnly, ...filterExprs(filters))
   const lead = and(hostOnly, ...filterExprs(filters), str('eventName', leadEvent))
   const leadNoFilters = and(hostOnly, str('eventName', leadEvent))
@@ -382,7 +393,7 @@ export async function getStats(landing: Landing, from: string, to: string, filte
 export async function getFilterOptions(landing: Landing, from: string, to: string): Promise<FilterOptions> {
   const key = `opts|${landing.hostname}|${from}|${to}|${isMock()}`
   return cached(key, false, async () => {
-    const host = str('hostName', landing.hostname)
+    const host = hostFilter(landing.hostname)
     const reqs = Object.fromEntries(FILTER_KEYS.map((k) => [k, {
       dimensions: [{ name: FILTER_DIMS[k] }],
       metrics: [{ name: 'sessions' }],
@@ -407,7 +418,7 @@ export async function getFilterOptions(landing: Landing, from: string, to: strin
 export async function getOverview(landings: Landing[], from: string, to: string): Promise<Overview> {
   const { range, prev } = periods(from, to)
   const leadEvent = leadEventName()
-  const hosts = landings.map((l) => l.hostname)
+  const hosts = landings.flatMap((l) => hostVariants(l.hostname))
   const key = `ov|${hosts.join(',')}|${from}|${to}|${leadEvent}|${isMock()}`
   return cached(key, false, async () => {
     const empty = { range, prev, mock: isMock(), fetchedAt: new Date().toISOString(), rows: [] as OverviewRow[] }
@@ -424,33 +435,33 @@ export async function getOverview(landings: Landing[], from: string, to: string)
     })
     const days = allDays(range.from, range.to)
     const dayIndex = new Map(days.map((d, i) => [d, i]))
-    const rows = new Map<string, OverviewRow>(landings.map((l) => [l.hostname, {
+    const rows = new Map<string, OverviewRow>(landings.map((l) => [bareHost(l.hostname), {
       id: l.id, name: l.name, hostname: l.hostname,
       sessions: { value: 0, prev: 0 }, leads: { value: 0, prev: 0 }, leadSessions: { value: 0, prev: 0 },
       spark: new Array(days.length).fill(0), sparkLeads: new Array(days.length).fill(0),
     }]))
     for (const row of reps.totals.rows ?? []) {
-      const o = rows.get(row.dimensionValues[0].value)
+      const o = rows.get(bareHost(row.dimensionValues[0].value))
       if (!o) continue
       const ri = rangeIndex(reps.totals, row)
-      o.sessions[ri ? 'prev' : 'value'] = num(row.metricValues[0])
+      { const k = ri ? 'prev' : 'value'; o.sessions[k] = (o.sessions[k] ?? 0) + num(row.metricValues[0]) }
     }
     for (const row of reps.leads.rows ?? []) {
-      const o = rows.get(row.dimensionValues[0].value)
+      const o = rows.get(bareHost(row.dimensionValues[0].value))
       if (!o) continue
       const ri = rangeIndex(reps.leads, row)
-      o.leads[ri ? 'prev' : 'value'] = num(row.metricValues[0])
-      o.leadSessions[ri ? 'prev' : 'value'] = num(row.metricValues[1])
+      { const k = ri ? 'prev' : 'value'; o.leads[k] = (o.leads[k] ?? 0) + num(row.metricValues[0]) }
+      { const k = ri ? 'prev' : 'value'; o.leadSessions[k] = (o.leadSessions[k] ?? 0) + num(row.metricValues[1]) }
     }
     for (const row of reps.daily.rows ?? []) {
-      const o = rows.get(row.dimensionValues[0].value)
+      const o = rows.get(bareHost(row.dimensionValues[0].value))
       const i = dayIndex.get(ymd(row.dimensionValues[1].value))
-      if (o && i !== undefined) o.spark[i] = num(row.metricValues[0])
+      if (o && i !== undefined) o.spark[i] += num(row.metricValues[0])
     }
     for (const row of reps.dailyLeads.rows ?? []) {
-      const o = rows.get(row.dimensionValues[0].value)
+      const o = rows.get(bareHost(row.dimensionValues[0].value))
       const i = dayIndex.get(ymd(row.dimensionValues[1].value))
-      if (o && i !== undefined) o.sparkLeads[i] = num(row.metricValues[0])
+      if (o && i !== undefined) o.sparkLeads[i] += num(row.metricValues[0])
     }
     return { ...empty, rows: [...rows.values()] }
   })
@@ -461,7 +472,7 @@ export async function getOverview(landings: Landing[], from: string, to: string)
 /** Daily sessions and leads per hostname for the last `days` full days (yesterday back). */
 export async function dailyByHost(hosts: string[], days: number) {
   const leadEvent = leadEventName()
-  const hostIn = { filter: { fieldName: 'hostName', inListFilter: { values: hosts } } }
+  const hostIn = { filter: { fieldName: 'hostName', inListFilter: { values: hosts.flatMap(hostVariants) } } }
   const range = [{ startDate: `${days}daysAgo`, endDate: 'yesterday' }]
   const reps = await runReports({
     s: { dimensions: [{ name: 'hostName' }, { name: 'date' }], metrics: [{ name: 'sessions' }], dateRanges: range, dimensionFilter: hostIn, limit: 50000 },
@@ -474,7 +485,7 @@ export async function dailyByHost(hosts: string[], days: number) {
     if (!m.has(d)) m.set(d, { sessions: 0, leads: 0 })
     return m.get(d)!
   }
-  for (const row of reps.s.rows ?? []) get(row.dimensionValues[0].value, ymd(row.dimensionValues[1].value)).sessions = num(row.metricValues[0])
-  for (const row of reps.l.rows ?? []) get(row.dimensionValues[0].value, ymd(row.dimensionValues[1].value)).leads = num(row.metricValues[0])
+  for (const row of reps.s.rows ?? []) get(bareHost(row.dimensionValues[0].value), ymd(row.dimensionValues[1].value)).sessions += num(row.metricValues[0])
+  for (const row of reps.l.rows ?? []) get(bareHost(row.dimensionValues[0].value), ymd(row.dimensionValues[1].value)).leads += num(row.metricValues[0])
   return out
 }

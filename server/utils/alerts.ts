@@ -14,7 +14,7 @@ export async function runAlerts(opts: { forceWeekly?: boolean } = {}) {
 
   const alerts: string[] = []
   for (const l of landings) {
-    const m = data.get(l.hostname) ?? new Map()
+    const m = data.get(bareHost(l.hostname)) ?? new Map()
     const y = m.get(yesterday) ?? { sessions: 0, leads: 0 }
     let s = 0, ld = 0
     for (let i = 2; i <= 15; i++) { const d = m.get(day(i)); s += d?.sessions ?? 0; ld += d?.leads ?? 0 }
@@ -31,7 +31,7 @@ export async function runAlerts(opts: { forceWeekly?: boolean } = {}) {
   let weeklyText = ''
   if (weekly) {
     const lines = landings.map((l) => {
-      const m = data.get(l.hostname) ?? new Map()
+      const m = data.get(bareHost(l.hostname)) ?? new Map()
       let s = 0, ld = 0, ps = 0, pl = 0
       for (let i = 1; i <= 7; i++) { const d = m.get(day(i)); s += d?.sessions ?? 0; ld += d?.leads ?? 0 }
       for (let i = 8; i <= 14; i++) { const d = m.get(day(i)); ps += d?.sessions ?? 0; pl += d?.leads ?? 0 }

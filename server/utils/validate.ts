@@ -23,7 +23,7 @@ export function cleanIds(v: unknown): number[] {
 
 export function cleanHostname(v: unknown): string {
   let h = String(v ?? '').trim().toLowerCase()
-  h = h.replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+  h = h.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '')
   if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(h)) throw createError({ statusCode: 400, statusMessage: 'Некоректний домен лендингу' })
   return h
 }
