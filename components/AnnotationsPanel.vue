@@ -40,7 +40,7 @@ async function remove(n: Annotation) {
     </div>
     <Transition name="expand">
       <div v-if="adding" class="form no-print" @keydown.enter.prevent="text && add()">
-        <input v-model="date" class="input" type="date" :min="from" :max="to" :aria-label="t('Дата')">
+        <UiDate v-model="date" :min="from" :max="to" :aria-label="t('Дата')" />
         <input v-model="text" class="input grow" maxlength="200" :placeholder="t('Напр. Новий пост в Instagram')" :aria-label="t('Текст позначки')">
         <button class="btn primary sm" :disabled="!text.trim() || busy" @click="add">{{ t('Зберегти') }}</button>
         <button class="btn sm" :aria-label="t('Скасувати')" @click="adding = false"><X :size="14" /></button>

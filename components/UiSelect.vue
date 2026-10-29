@@ -190,8 +190,4 @@ onBeforeUnmount(() => { open.value = false })
 .ui-select-panel li.sel .hint { font-weight: 400; }
 .ui-select-panel .tick { flex: none; color: var(--accent); }
 .ui-select-panel .none { padding: 14px 10px; color: var(--ink-3); text-align: center; font-size: 13px; }
-.pop-enter-active, .pop-leave-active { transition: opacity .14s ease, margin .14s ease; }
-.pop-enter-from, .pop-leave-to { opacity: 0; margin-top: -4px; }
-.ui-select-panel.up.pop-enter-from, .ui-select-panel.up.pop-leave-to { margin-top: 4px; }
-@media (prefers-reduced-motion: reduce) { .pop-enter-active, .pop-leave-active { transition: none; } }
 </style>

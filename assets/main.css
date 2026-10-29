@@ -155,7 +155,7 @@ label.field { display: grid; gap: 5px; font-size: 13px; color: var(--ink-2); }
 /* Print / PDF: the dashboard as a clean report */
 @media print {
   body { background: #fff; }
-  .no-print, .topbar, .filters .period, .filters .landing .ui-select, .ui-select-panel { display: none !important; }
+  .no-print, .topbar, .filters .period, .filters .landing .ui-select, .ui-select-panel, .drp-panel { display: none !important; }
   .card { break-inside: avoid; border-color: #ddd; }
   .container { max-width: none; padding: 0; }
   * { animation: none !important; transition: none !important; }
@@ -183,3 +183,25 @@ label.field { display: grid; gap: 5px; font-size: 13px; color: var(--ink-2); }
   .toast-enter-active, .toast-leave-active { transition: opacity .2s ease, transform .2s ease; }
   .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(-6px); }
 }
+
+/* ---------- popovers (select, date pickers) ---------- */
+.drp-panel {
+  position: fixed; z-index: 60; box-sizing: border-box; padding: 12px 14px 12px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--hair); border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 18, 30, .14), 0 2px 6px rgba(15, 18, 30, .06);
+}
+.drp-panel.up { transform: translateY(-100%); }
+.drp-panel .nav { position: absolute; left: 10px; right: 10px; top: 12px; display: flex; justify-content: space-between; pointer-events: none; }
+.drp-panel .nav-btn { all: unset; pointer-events: auto; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: var(--ink-2); }
+.drp-panel .nav-btn:hover:not(:disabled) { background: var(--grid); color: var(--ink); }
+.drp-panel .nav-btn:disabled { opacity: .3; cursor: default; }
+.drp-panel .nav-btn:focus-visible { outline: 2px solid var(--accent); }
+.drp-panel .months { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.drp-panel.narrow .months { grid-template-columns: 1fr; }
+.drp-panel .foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--hair); }
+.drp-panel .sum { font-size: 13.5px; color: var(--ink-2); }
+.drp-panel .acts { display: flex; gap: 8px; margin-left: auto; }
+.pop-enter-active, .pop-leave-active { transition: opacity .14s ease, margin .14s ease; }
+.pop-enter-from, .pop-leave-to { opacity: 0; margin-top: -4px; }
+.up.pop-enter-from, .up.pop-leave-to { margin-top: 4px; }
+@media (prefers-reduced-motion: reduce) { .pop-enter-active, .pop-leave-active { transition: none; } }
